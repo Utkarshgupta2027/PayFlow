@@ -1260,7 +1260,7 @@ body {
 ══════════════════════════════════════════════ */
 
 /* --- 1. Global Layout Adjustments --- */
-@media (max-width: 1024px) {
+@media (min-width: 769px) and (max-width: 1024px) {
   .sidebar {
     width: 240px;
   }
