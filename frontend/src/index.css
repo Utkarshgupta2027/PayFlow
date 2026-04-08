@@ -1273,23 +1273,6 @@ body {
 
 /* --- 2. Tablet & Large Phone (Max 768px) --- */
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-    width: 280px;
-    /* Wider for easier touch navigation */
-    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .main-content {
-    margin-left: 0;
-    padding: 1rem;
-    padding-top: 5rem;
-    /* Space for mobile header */
-  }
 
   /* Stack Stat Cards */
   .stats-grid {
