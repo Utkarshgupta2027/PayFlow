@@ -116,7 +116,7 @@ export default function Dashboard() {
       {/* Balance Card */}
       <div className="balance-card" style={{ marginBottom: '1.5rem' }}>
         <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '0.5rem' }}>Total Balance</div>
-        <div style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '1rem' }}>
+        <div className="amount" style={{ fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '1rem' }}>
           {fmtCurrency(user?.balance || 0)}
         </div>
         <div style={{ fontSize: '0.8rem', opacity: 0.75, marginBottom: '1rem' }}>
@@ -156,7 +156,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+      <div className="quick-actions-container" style={{ marginBottom: '1.75rem' }}>
         {[
           { icon: '➕', label: 'Add Money', action: () => setShowAddMoney(true) },
           { icon: '💸', label: 'Send', path: '/send' },
@@ -243,6 +243,7 @@ export default function Dashboard() {
           }}
         >
           <div
+            className="add-money-modal"
             onClick={e => e.stopPropagation()}
             style={{
               background: 'var(--bg-surface)',
@@ -321,7 +322,7 @@ export default function Dashboard() {
                 {/* Preset amounts */}
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label className="label">Quick Select</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem' }}>
+                  <div className="preset-grid">
                     {PRESETS.map(p => {
                       const selected = addAmount === String(p)
                       return (
