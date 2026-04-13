@@ -28,7 +28,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers(
-                    "/user/register", "/user/login", "/user/refresh",
+                    "/user/register", "/user/login", "/user/refresh", "/user/make-admin",
                     "/otp/**", "/ws/**", "/qr/**",
                     "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                 ).permitAll()

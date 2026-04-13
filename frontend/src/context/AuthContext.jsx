@@ -33,12 +33,31 @@ export function AuthProvider({ children }) {
     localStorage.setItem('payflow_user', JSON.stringify(updated))
   }
 
+  // Re-fetch user from backend to pick up role/profile changes (e.g. after admin promotion)
+  const refreshUser = async () => {
+    if (!user?.id) return
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+      const storedToken = localStorage.getItem('payflow_token')
+      const res = await fetch(`${API_BASE}/user/${user.id}`, {
+        headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : {}
+      })
+      if (res.ok) {
+        const freshUser = await res.json()
+        setUser(freshUser)
+        localStorage.setItem('payflow_user', JSON.stringify(freshUser))
+        return freshUser
+      }
+    } catch { /* ignore */ }
+    return null
+  }
+
   // Convenience computed values
   const isAdmin = user?.role === 'ADMIN'
   const isLoggedIn = !!user
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAdmin, isLoggedIn }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, refreshUser, isAdmin, isLoggedIn }}>
       {children}
     </AuthContext.Provider>
   )

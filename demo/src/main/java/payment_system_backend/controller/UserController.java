@@ -12,6 +12,7 @@ import payment_system_backend.service.UserService;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/user")
@@ -85,5 +86,30 @@ public class UserController {
         return userRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Bootstrap endpoint: promote any user to ADMIN by email.
+     * Protected by a secret key param. Remove or restrict in production.
+     * Usage: POST /user/make-admin?email=you@example.com&secret=payflow-admin-2024
+     */
+    @PostMapping("/make-admin")
+    public ResponseEntity<?> makeAdmin(
+            @RequestParam String email,
+            @RequestParam String secret) {
+        if (!"payflow-admin-2024".equals(secret)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Invalid secret key"));
+        }
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found: " + email));
+        }
+        user.setRole("ADMIN");
+        userRepository.save(user);
+        return ResponseEntity.ok(Map.of(
+            "message", "User promoted to ADMIN successfully",
+            "email", email,
+            "role", "ADMIN"
+        ));
     }
 }
