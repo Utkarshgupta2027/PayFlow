@@ -98,13 +98,16 @@ export default function QRPage() {
   const downloadQr = async () => {
     setDownloading(true)
     try {
+      const res = await fetch(myQrUrl)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = myQrUrl
+      a.href = blobUrl
       a.download = `payflow-qr-${user?.name?.replace(/\s+/g, '-') || user?.id}.png`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      URL.revokeObjectURL(blobUrl)
       setToast({ type: 'success', icon: '⬇️', message: 'QR code downloaded!' })
     } catch {
       setToast({ type: 'error', icon: '❌', message: 'Failed to download QR' })

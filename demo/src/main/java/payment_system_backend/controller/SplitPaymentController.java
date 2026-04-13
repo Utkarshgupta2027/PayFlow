@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import payment_system_backend.model.SplitPayment;
 import payment_system_backend.service.SplitPaymentService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class SplitPaymentController {
 
             @SuppressWarnings("unchecked")
             List<Object> rawIds = (List<Object>) body.get("participantIds");
-            List<Long> participantIds = rawIds.stream().map(obj -> Long.parseLong(obj.toString())).toList();
+            List<Long> participantIds = new ArrayList<>(rawIds.stream().map(obj -> Long.parseLong(obj.toString())).toList());
 
             SplitPayment split = splitPaymentService.createSplit(creatorId, title, totalAmount, participantIds);
             return ResponseEntity.ok(split);
