@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { apiUrl } from '../api.js'
+import API_BASE from '../api.js'
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', phoneNumber: '' })
@@ -16,7 +16,7 @@ export default function Register() {
     setError('')
     setLoading(true)
     try {
-      const res = await fetch(apiUrl('/user/register'), {
+      const res = await fetch(`${API_BASE}/user/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -26,14 +26,14 @@ export default function Register() {
         throw new Error(msg || 'Registration failed')
       }
       // Auto-login after register
-      const loginRes = await fetch(apiUrl('/user/login'), {
+      const loginRes = await fetch(`${API_BASE}/user/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, password: form.password })
       })
       if (loginRes.ok) {
         const data = await loginRes.json()
-        login(data.user, data.token)
+        login(data.user, data.token, data.refreshToken)
         navigate('/')
       } else {
         navigate('/login')

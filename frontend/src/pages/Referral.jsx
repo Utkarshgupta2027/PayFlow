@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useOutletContext } from 'react-router-dom'
-import { apiUrl } from '../api.js'
+import API_BASE, { apiFetch } from '../api.js'
 
 function copyToClipboard(text) {
   return navigator.clipboard.writeText(text).catch(() => {
@@ -31,7 +31,7 @@ export default function Referral() {
 
   useEffect(() => {
     if (!user?.id) return
-    fetch(apiUrl(`/referral/code/${user.id}`))
+    apiFetch(`/referral/code/${user.id}`)
       .then(r => r.json())
       .then(d => {
         setReferralCode(d.referralCode || '')
@@ -77,8 +77,8 @@ export default function Referral() {
     setClaimError('')
     setClaimSuccess(null)
     try {
-      const res = await fetch(
-        apiUrl(`/referral/claim?userId=${user.id}&code=${claimCode.trim().toUpperCase()}`),
+      const res = await apiFetch(
+        `/referral/claim?userId=${user.id}&code=${claimCode.trim().toUpperCase()}`,
         { method: 'POST' }
       )
       const d = await res.json()

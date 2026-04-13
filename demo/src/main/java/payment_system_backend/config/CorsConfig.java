@@ -10,9 +10,10 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOriginPatterns(
-                    "http://localhost:3000",       // local dev
-                    "http://localhost:*",          // any local port
-                    "https://payment-system-9ev8.vercel.app" // production
+                    "http://localhost:3000",
+                    "http://localhost:*",
+                    "https://payment-system-9ev8.vercel.app",
+                    "https://*.vercel.app"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")

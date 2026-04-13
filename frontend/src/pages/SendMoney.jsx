@@ -1,10 +1,33 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
-import { apiUrl } from '../api.js'
+import { apiFetch } from '../api.js'
+import API_BASE from '../api.js'
 
 function fmtCurrency(n) {
   return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+}
+
+function RiskIndicator({ risk }) {
+  if (!risk) return null
+  const levelClass = { LOW: 'risk-low', MEDIUM: 'risk-medium', HIGH: 'risk-high' }[risk.level] || 'risk-low'
+  const icon = { LOW: '🟢', MEDIUM: '🟡', HIGH: '🔴' }[risk.level] || '🟢'
+  const pct = Math.min(100, risk.score)
+  const barColor = { LOW: '#10b981', MEDIUM: '#f59e0b', HIGH: '#ef4444' }[risk.level] || '#10b981'
+
+  return (
+    <div className={`risk-indicator ${levelClass}`} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.375rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+        <span>{icon} Risk Score: <strong>{risk.score.toFixed(0)}/100</strong> — <strong>{risk.level}</strong></span>
+      </div>
+      <div className="risk-score-bar" style={{ width: '100%' }}>
+        <div className="risk-score-fill" style={{ width: `${pct}%`, background: barColor }} />
+      </div>
+      {risk.reason && risk.reason !== 'No suspicious activity' && (
+        <div style={{ fontSize: '0.78rem', opacity: 0.9 }}>⚠️ {risk.reason}</div>
+      )}
+    </div>
+  )
 }
 
 export default function SendMoney() {
@@ -13,12 +36,14 @@ export default function SendMoney() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  const [form, setForm] = useState({ receiverId: '', amount: '' })
+  const [form, setForm] = useState({ receiverId: '', amount: '', description: '' })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(null)
   const [error, setError] = useState('')
   const [qrPrefilled, setQrPrefilled] = useState(false)
   const [receiverInfo, setReceiverInfo] = useState(null)
+  const [risk, setRisk] = useState(null)
+  const riskTimer = useRef(null)
 
   // Pre-fill receiverId from QR scan URL param
   useEffect(() => {
@@ -26,13 +51,29 @@ export default function SendMoney() {
     if (rid) {
       setForm(f => ({ ...f, receiverId: rid }))
       setQrPrefilled(true)
-      // Lookup receiver info
-      fetch(apiUrl(`/user/${rid}`))
+      fetch(`${API_BASE}/user/${rid}`)
         .then(r => r.ok ? r.json() : null)
         .then(u => { if (u) setReceiverInfo(u) })
         .catch(() => {})
     }
   }, [])
+
+  // Live risk preview — debounced 600ms after amount changes
+  useEffect(() => {
+    const amount = parseFloat(form.amount)
+    if (!form.amount || isNaN(amount) || amount <= 0 || !user?.id) {
+      setRisk(null)
+      return
+    }
+    clearTimeout(riskTimer.current)
+    riskTimer.current = setTimeout(async () => {
+      try {
+        const res = await apiFetch(`/transaction/risk-preview?senderId=${user.id}&amount=${amount}`)
+        if (res.ok) setRisk(await res.json())
+      } catch { /* ignore */ }
+    }, 600)
+    return () => clearTimeout(riskTimer.current)
+  }, [form.amount, user?.id])
 
   const handleSend = async (e) => {
     e.preventDefault()
@@ -42,28 +83,33 @@ export default function SendMoney() {
     if (Number(form.amount) <= 0) { setError('Amount must be greater than 0'); return }
     if (Number(form.amount) > Number(user?.balance || 0)) { setError('Insufficient balance'); return }
     if (String(form.receiverId) === String(user?.id)) { setError('Cannot send to yourself'); return }
+    if (risk?.level === 'HIGH') { setError('Transaction blocked due to high fraud risk. Please contact support.'); return }
 
     setLoading(true)
     try {
-      const res = await fetch(
-        apiUrl(`/transaction/send?senderId=${user.id}&receiverId=${form.receiverId}&amount=${form.amount}`),
-        { method: 'POST' }
-      )
+      const params = new URLSearchParams({
+        senderId: user.id,
+        receiverId: form.receiverId,
+        amount: form.amount,
+        ...(form.description ? { description: form.description } : {})
+      })
+      const res = await apiFetch(`/transaction/send?${params}`, { method: 'POST' })
       if (!res.ok) {
-        const msg = await res.text()
-        throw new Error(msg || 'Transaction failed')
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || await res.text() || 'Transaction failed')
       }
       const data = await res.json()
       setSuccess(data)
-      setForm({ receiverId: '', amount: '' })
+      setForm({ receiverId: '', amount: '', description: '' })
+      setRisk(null)
 
       // Refresh balance
-      fetch(apiUrl(`/user/${user.id}`)).then(r => r.json()).then(u => updateUser(u)).catch(() => {})
+      apiFetch(`/user/${user.id}`).then(r => r.json()).then(u => updateUser(u)).catch(() => {})
 
       setToast({
-        type: 'gold',
-        icon: '⭐',
-        message: `Payment sent! +${data.pointsAwarded} reward points earned!`,
+        type: data.riskLevel === 'MEDIUM' ? 'warning' : 'gold',
+        icon: data.riskLevel === 'MEDIUM' ? '⚠️' : '⭐',
+        message: `Payment sent! +${data.pointsAwarded} reward points earned!${data.riskLevel === 'MEDIUM' ? ' (Flagged for review)' : ''}`,
         duration: 4500
       })
     } catch (err) {
@@ -78,8 +124,15 @@ export default function SendMoney() {
     <div className="animate-fade-in">
       <div style={{ marginBottom: '1.75rem' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>💸 Send Money</h1>
-        <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Transfer funds instantly</p>
+        <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Transfer funds instantly with fraud protection</p>
       </div>
+
+      {/* Frozen warning */}
+      {user?.frozen && (
+        <div className="alert-error" style={{ marginBottom: '1.5rem' }}>
+          🔒 Your account is frozen. Please contact support to restore access.
+        </div>
+      )}
 
       {/* Balance */}
       <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, var(--gradient-from)22, var(--gradient-to)11)' }}>
@@ -101,17 +154,17 @@ export default function SendMoney() {
             ✅ Payment successful! <strong>{fmtCurrency(success.amount || form.amount)}</strong> sent.
             <br />
             <span style={{ fontSize: '0.8125rem', opacity: 0.85 }}>
-              ⭐ +{success.pointsAwarded} reward points earned! Total: {success.totalPoints} pts
+              ⭐ +{success.pointsAwarded} reward points · Risk: {success.riskLevel}
             </span>
           </div>
         )}
         {error && <div className="alert-error" style={{ marginBottom: '1.25rem' }}>{error}</div>}
 
         <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Recipient */}
           <div>
             <label className="label">Recipient</label>
 
-            {/* QR pre-fill banner */}
             {qrPrefilled && receiverInfo && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.875rem',
@@ -137,7 +190,6 @@ export default function SendMoney() {
               </div>
             )}
 
-            {/* Receiver ID input */}
             <input
               id="send-receiver-id"
               className="input-field"
@@ -152,6 +204,7 @@ export default function SendMoney() {
             </div>
           </div>
 
+          {/* Amount */}
           <div>
             <label className="label">Amount</label>
             <div style={{ position: 'relative' }}>
@@ -178,6 +231,22 @@ export default function SendMoney() {
             )}
           </div>
 
+          {/* Risk Indicator */}
+          {risk && <RiskIndicator risk={risk} />}
+
+          {/* Description */}
+          <div>
+            <label className="label">Note (optional)</label>
+            <input
+              className="input-field"
+              type="text"
+              placeholder="e.g. Dinner split, rent, etc."
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              maxLength={100}
+            />
+          </div>
+
           {/* Quick amounts */}
           <div>
             <label className="label">Quick Amount</label>
@@ -196,19 +265,26 @@ export default function SendMoney() {
             </div>
           </div>
 
-          <button id="send-submit" className="btn-primary" type="submit" disabled={loading || !form.receiverId || !form.amount}>
+          <button
+            id="send-submit"
+            className="btn-primary"
+            type="submit"
+            disabled={loading || !form.receiverId || !form.amount || user?.frozen || risk?.level === 'HIGH'}
+          >
             {loading ? <span className="animate-spin">⟳</span> : '💸'}
             {loading ? 'Sending...' : `Send ${form.amount ? fmtCurrency(Number(form.amount)) : 'Money'}`}
           </button>
+
+          {risk?.level === 'HIGH' && (
+            <div className="alert-error" style={{ textAlign: 'center', fontSize: '0.8125rem' }}>
+              ⛔ Transaction blocked. Risk score too high.
+            </div>
+          )}
         </form>
       </div>
 
       {/* QR Scan shortcut */}
-      <div
-        className="card card-hover"
-        onClick={() => navigate('/qr')}
-        style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}
-      >
+      <div className="card card-hover" onClick={() => navigate('/qr')} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <div style={{
           width: '3rem', height: '3rem', borderRadius: '0.875rem',
           background: 'var(--accent-glow)', border: '1px solid var(--accent)',

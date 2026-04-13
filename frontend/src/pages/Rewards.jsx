@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useOutletContext } from 'react-router-dom'
-import { apiUrl } from '../api.js'
+import API_BASE, { apiFetch } from '../api.js'
 
 const TIERS = {
   BRONZE:   { label: 'Bronze',   min: 0,    max: 499,  icon: '🥉', class: 'tier-bronze', next: 'Silver', nextAt: 500 },
@@ -25,7 +25,7 @@ export default function Rewards() {
 
   const fetchRewards = () => {
     if (!user?.id) return
-    fetch(apiUrl(`/rewards/${user.id}`))
+    apiFetch(`/rewards/${user.id}`)
       .then(r => r.json())
       .then(d => {
         setRewards(d)
@@ -45,7 +45,7 @@ export default function Rewards() {
   const claimBonus = async () => {
     setClaiming(true)
     try {
-      const res = await fetch(apiUrl(`/rewards/daily-bonus/${user.id}`), { method: 'POST' })
+      const res = await apiFetch(`/rewards/daily-bonus/${user.id}`, { method: 'POST' })
       const d = await res.json()
       if (d.alreadyClaimed || d.pointsAwarded === 0) {
         setAlreadyClaimed(true)

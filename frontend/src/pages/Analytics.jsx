@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { apiUrl } from '../api.js'
+import { apiFetch } from '../api.js'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Area, AreaChart, Legend,
@@ -79,7 +79,7 @@ export default function Analytics() {
     if (!user?.id) return
     setLoading(true)
     setError(null)
-    fetch(apiUrl(`/transaction/analytics/${user.id}?period=${period}`))
+    apiFetch(`/transaction/analytics/${user.id}?period=${period}`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
       .then(d => { setChartData(Array.isArray(d.data) ? d.data : []); setTotal(d.total || 0) })
       .catch(() => { setError('Could not load chart data.'); setChartData([]) })
@@ -90,7 +90,7 @@ export default function Analytics() {
   useEffect(() => {
     if (!user?.id) return
     setTxLoading(true)
-    fetch(apiUrl(`/transaction/history/${user.id}`))
+    apiFetch(`/transaction/history/${user.id}`)
       .then(r => r.json())
       .then(d => setTransactions(Array.isArray(d) ? d : []))
       .catch(() => setTransactions([]))

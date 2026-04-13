@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useOutletContext, useNavigate } from 'react-router-dom'
-import { apiUrl } from '../api.js'
+import API_BASE, { apiFetch } from '../api.js'
 
 export default function QRPage() {
   const { user } = useAuth()
@@ -24,7 +24,7 @@ export default function QRPage() {
 
   // Load my QR URL
   useEffect(() => {
-    if (user?.id) setMyQrUrl(apiUrl(`/qr/generate/${user.id}?t=${Date.now()}`))
+    if (user?.id) setMyQrUrl(`${API_BASE}/qr/generate/${user.id}?t=${Date.now()}`)
   }, [user?.id])
 
   // Cleanup scanner on unmount

@@ -10,11 +10,21 @@ import Referral from './pages/Referral.jsx'
 import Settings from './pages/Settings.jsx'
 import SendMoney from './pages/SendMoney.jsx'
 import QRPage from './pages/QRPage.jsx'
+import AdminPanel from './pages/AdminPanel.jsx'
+import Notifications from './pages/Notifications.jsx'
+import SplitPayment from './pages/SplitPayment.jsx'
 import Layout from './components/Layout.jsx'
 
 function PrivateRoute({ children }) {
   const { user } = useAuth()
   return user ? children : <Navigate to="/login" replace />
+}
+
+function AdminRoute({ children }) {
+  const { user, isAdmin } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (!isAdmin) return <Navigate to="/" replace />
+  return children
 }
 
 function PublicRoute({ children }) {
@@ -38,6 +48,9 @@ export default function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="send" element={<SendMoney />} />
               <Route path="qr" element={<QRPage />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="split" element={<SplitPayment />} />
+              <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
             </Route>
           </Routes>
         </BrowserRouter>

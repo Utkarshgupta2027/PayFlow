@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useNavigate } from 'react-router-dom'
 import { useOutletContext } from 'react-router-dom'
-import { apiUrl } from '../api.js'
+import API_BASE, { apiFetch } from '../api.js'
 
 const THEME_CONFIG = {
   dark:   { label: 'Dark',   icon: '🌙', swatch: '#0ea5e9', bg: '#020617' },
@@ -40,7 +40,7 @@ export default function Settings() {
 
   const fetchAccounts = () => {
     if (!user?.id) return
-    fetch(apiUrl(`/bank/accounts/${user.id}`))
+    apiFetch(`/bank/accounts/${user.id}`)
       .then(r => r.json())
       .then(d => setAccounts(Array.isArray(d) ? d : []))
       .catch(() => setAccounts([]))
@@ -60,7 +60,7 @@ export default function Settings() {
     setBankError('')
     setAddingBank(true)
     try {
-      const res = await fetch(apiUrl('/bank/add'), {
+      const res = await apiFetch('/bank/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...bankForm, userId: user.id }),
@@ -84,7 +84,7 @@ export default function Settings() {
   const handleRemove = async (id) => {
     setRemovingId(id)
     try {
-      await fetch(apiUrl(`/bank/remove/${id}`), { method: 'DELETE' })
+      await apiFetch(`/bank/remove/${id}`, { method: 'DELETE' })
       setAccounts(prev => prev.filter(a => a.id !== id))
       setToast({ type: 'info', icon: '🗑️', message: 'Bank account removed.' })
     } catch {
@@ -96,7 +96,7 @@ export default function Settings() {
 
   const handleSetPrimary = async (accountId) => {
     try {
-      await fetch(apiUrl(`/bank/primary/${user.id}/${accountId}`), { method: 'PUT' })
+      await apiFetch(`/bank/primary/${user.id}/${accountId}`, { method: 'PUT' })
       setAccounts(prev => prev.map(a => ({ ...a, primary: a.id === accountId })))
       setToast({ type: 'success', icon: '⭐', message: 'Primary account updated!' })
     } catch {

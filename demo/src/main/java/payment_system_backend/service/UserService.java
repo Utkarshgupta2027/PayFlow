@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Service
 public class UserService {
+
     @Autowired
     private UserRepository userRepository;
 
@@ -18,14 +19,21 @@ public class UserService {
             throw new RuntimeException("Email already registered. Please use a different email.");
         }
 
-        user.setBalance(0); // default wallet balance
+        user.setBalance(0);
 
-        // Auto-generate unique referral code (first 8 chars of UUID, uppercase)
+        // Auto-generate unique referral code
         String code;
         do {
             code = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         } while (userRepository.findByReferralCode(code) != null);
         user.setReferralCode(code);
+
+        // First user ever gets ADMIN role
+        if (userRepository.count() == 0) {
+            user.setRole("ADMIN");
+        } else {
+            user.setRole("USER");
+        }
 
         return userRepository.save(user);
     }

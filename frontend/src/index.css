@@ -1367,3 +1367,112 @@ body {
     transform: scale(0.98);
   }
 }
+
+/* ══════════════════════════════════════════════
+   Notification Badge
+══════════════════════════════════════════════ */
+.notif-bell { position: relative; }
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--bg-surface);
+  animation: pulse-badge 2s infinite;
+}
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* ══════════════════════════════════════════════
+   Risk Indicator
+══════════════════════════════════════════════ */
+.risk-indicator {
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  animation: slideUp 0.3s ease;
+}
+.risk-low { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
+.risk-medium { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
+.risk-high { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+.risk-score-bar { height: 6px; border-radius: 3px; background: var(--bg-input); overflow: hidden; margin-top: 0.375rem; }
+.risk-score-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+/* ══════════════════════════════════════════════
+   Admin Panel
+══════════════════════════════════════════════ */
+.admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.admin-stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 0.875rem; padding: 1.25rem; text-align: center; }
+.admin-stat-number { font-size: 2rem; font-weight: 800; color: var(--accent-light); }
+.admin-stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.admin-table th { text-align: left; padding: 0.75rem 1rem; color: var(--text-faint); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); }
+.admin-table td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--border-color); color: var(--text-muted); vertical-align: middle; }
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table tr:hover td { background: var(--accent-glow); }
+.status-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.status-active { background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+.status-frozen { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.status-pending { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+.status-approved { background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+.status-rejected { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.btn-danger { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.3); border-radius: 0.5rem; padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-danger:hover { background: #ef4444; color: white; }
+.btn-success { background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.3); border-radius: 0.5rem; padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-success:hover { background: #10b981; color: white; }
+.admin-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.admin-tab { padding: 0.5rem 1.25rem; border-radius: 0.625rem; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.admin-tab.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 2px 8px var(--accent-glow); }
+
+/* ══════════════════════════════════════════════
+   Notifications Page
+══════════════════════════════════════════════ */
+.notif-item { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); transition: background 0.15s; }
+.notif-item:hover { background: var(--accent-glow); }
+.notif-item.unread { border-left: 3px solid var(--accent); }
+.notif-icon { width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; flex-shrink: 0; }
+.notif-icon-info { background: rgba(14,165,233,0.15); }
+.notif-icon-success { background: rgba(16,185,129,0.15); }
+.notif-icon-alert { background: rgba(239,68,68,0.15); }
+.notif-icon-warning { background: rgba(245,158,11,0.15); }
+
+/* ══════════════════════════════════════════════
+   Split Payment Page  
+══════════════════════════════════════════════ */
+.split-progress-bar { height: 8px; border-radius: 4px; background: var(--bg-input); overflow: hidden; margin-top: 0.5rem; }
+.split-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gradient-from), var(--gradient-to)); transition: width 0.5s ease; }
+.participant-row { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; }
+.participant-row:last-child { border-bottom: none; }
+
+/* ══════════════════════════════════════════════
+   Monthly Insight Banner
+══════════════════════════════════════════════ */
+.insight-banner { border-radius: 0.875rem; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.875rem; font-size: 0.875rem; }
+.insight-up { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+.insight-down { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+
+/* ══════════════════════════════════════════════
+   Risk Score Indicator (SendMoney)
+══════════════════════════════════════════════ */
+.risk-indicator { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 0.8125rem; font-weight: 600; }
+.risk-low { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); color: #34d399; }
+.risk-medium { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); color: #fbbf24; }
+.risk-high { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+.risk-score-bar { height: 5px; background: var(--bg-input); border-radius: 99px; overflow: hidden; }
+.risk-score-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }

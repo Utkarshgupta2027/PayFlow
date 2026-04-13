@@ -9,6 +9,7 @@ import payment_system_backend.repository.UserRepository;
 import payment_system_backend.security.JwtUtil;
 import payment_system_backend.service.UserService;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +22,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
@@ -41,16 +45,39 @@ public class UserController {
                 return ResponseEntity.status(401).body("Invalid email or password. Please try again.");
             }
 
-            String token = JwtUtil.generateToken(user.getEmail());
+            // Frozen account check
+            if (user.isFrozen()) {
+                return ResponseEntity.status(403).body(
+                    "Your account has been frozen due to suspicious activity. Please contact support.");
+            }
+
+            // Update last login timestamp
+            user.setLastLoginAt(LocalDateTime.now());
+            userRepository.save(user);
+
+            String token = jwtUtil.generateToken(user.getEmail());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
 
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
+            response.put("refreshToken", refreshToken);
             response.put("user", user);
 
             return ResponseEntity.ok(response);
         } catch (Exception ex) {
             return ResponseEntity.status(500).body("Login failed. Please try again.");
         }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        String email = jwtUtil.validateRefreshToken(refreshToken);
+        if (email == null) {
+            return ResponseEntity.status(401).body("Invalid or expired refresh token");
+        }
+        String newToken = jwtUtil.generateToken(email);
+        return ResponseEntity.ok(Map.of("token", newToken));
     }
 
     @GetMapping("/{id}")

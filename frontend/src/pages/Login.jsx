@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { apiUrl } from '../api.js'
+import API_BASE from '../api.js'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -16,7 +16,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const res = await fetch(apiUrl('/user/login'), {
+      const res = await fetch(`${API_BASE}/user/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -26,7 +26,7 @@ export default function Login() {
         throw new Error(msg || 'Login failed')
       }
       const data = await res.json()
-      login(data.user, data.token)
+      login(data.user, data.token, data.refreshToken)
       navigate('/')
     } catch (err) {
       setError(err.message)

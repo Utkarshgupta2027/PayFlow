@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { apiUrl } from '../api.js'
+import API_BASE, { apiFetch } from '../api.js'
 
 function fmtCurrency(n) {
   return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -30,7 +30,7 @@ export default function Dashboard() {
   // Fetch user balance
   useEffect(() => {
     if (!user?.id) return
-    fetch(apiUrl(`/user/${user.id}`))
+    apiFetch(`/user/${user.id}`)
       .then(r => r.json())
       .then(u => updateUser(u))
       .catch(() => {})
@@ -39,7 +39,7 @@ export default function Dashboard() {
   // Fetch transactions
   useEffect(() => {
     if (!user?.id) return
-    fetch(apiUrl(`/transaction/history/${user.id}`))
+    apiFetch(`/transaction/history/${user.id}`)
       .then(r => r.json())
       .then(data => setTransactions(Array.isArray(data) ? data.slice(0, 8) : []))
       .catch(() => setTransactions([]))
@@ -52,7 +52,7 @@ export default function Dashboard() {
     const today = new Date().toDateString()
     const lastBonus = localStorage.getItem('payflow_daily_bonus_date')
     if (lastBonus === today) return
-    fetch(apiUrl(`/rewards/daily-bonus/${user.id}`), { method: 'POST' })
+    apiFetch(`/rewards/daily-bonus/${user.id}`, { method: 'POST' })
       .then(r => r.json())
       .then(d => {
         if (!d.alreadyClaimed && d.pointsAwarded > 0) {
@@ -68,7 +68,7 @@ export default function Dashboard() {
     if (!amt || amt <= 0) return
     setAddLoading(true)
     try {
-      const res = await fetch(apiUrl('/wallet/addMoney'), {
+      const res = await apiFetch('/wallet/addMoney', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, amount: amt })

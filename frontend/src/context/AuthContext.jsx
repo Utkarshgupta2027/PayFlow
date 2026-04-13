@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState } from 'react'
 
 const AuthContext = createContext(null)
 
@@ -9,11 +9,14 @@ export function AuthProvider({ children }) {
   })
   const [token, setToken] = useState(() => localStorage.getItem('payflow_token') || null)
 
-  const login = (userData, tokenValue) => {
+  const login = (userData, tokenValue, refreshToken) => {
     setUser(userData)
     setToken(tokenValue)
     localStorage.setItem('payflow_user', JSON.stringify(userData))
     localStorage.setItem('payflow_token', tokenValue)
+    if (refreshToken) {
+      localStorage.setItem('payflow_refresh_token', refreshToken)
+    }
   }
 
   const logout = () => {
@@ -21,6 +24,7 @@ export function AuthProvider({ children }) {
     setToken(null)
     localStorage.removeItem('payflow_user')
     localStorage.removeItem('payflow_token')
+    localStorage.removeItem('payflow_refresh_token')
     localStorage.removeItem('payflow_daily_bonus_date')
   }
 
@@ -29,8 +33,12 @@ export function AuthProvider({ children }) {
     localStorage.setItem('payflow_user', JSON.stringify(updated))
   }
 
+  // Convenience computed values
+  const isAdmin = user?.role === 'ADMIN'
+  const isLoggedIn = !!user
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAdmin, isLoggedIn }}>
       {children}
     </AuthContext.Provider>
   )

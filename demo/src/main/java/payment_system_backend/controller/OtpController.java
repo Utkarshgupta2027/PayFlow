@@ -22,6 +22,9 @@ public class OtpController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     /**
      * POST /otp/send
      * Body: { "phoneNumber": "+91XXXXXXXXXX" }
@@ -89,7 +92,7 @@ public class OtpController {
             return ResponseEntity.status(404).body("No account found for this phone number. Please register first.");
         }
 
-        String token = JwtUtil.generateToken(user.getEmail() != null ? user.getEmail() : user.getPhoneNumber());
+        String token = jwtUtil.generateToken(user.getEmail() != null ? user.getEmail() : user.getPhoneNumber());
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
