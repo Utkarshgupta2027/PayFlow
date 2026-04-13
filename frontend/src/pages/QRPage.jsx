@@ -98,11 +98,8 @@ export default function QRPage() {
   const downloadQr = async () => {
     setDownloading(true)
     try {
-      const res = await fetch(myQrUrl)
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = myQrUrl
       a.download = `payflow-qr-${user?.name?.replace(/\s+/g, '-') || user?.id}.png`
       document.body.appendChild(a)
       a.click()

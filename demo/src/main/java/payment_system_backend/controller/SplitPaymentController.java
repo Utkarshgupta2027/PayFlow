@@ -24,8 +24,8 @@ public class SplitPaymentController {
             double totalAmount = Double.parseDouble(body.get("totalAmount").toString());
 
             @SuppressWarnings("unchecked")
-            List<Integer> rawIds = (List<Integer>) body.get("participantIds");
-            List<Long> participantIds = rawIds.stream().map(Long::valueOf).toList();
+            List<Object> rawIds = (List<Object>) body.get("participantIds");
+            List<Long> participantIds = rawIds.stream().map(obj -> Long.parseLong(obj.toString())).toList();
 
             SplitPayment split = splitPaymentService.createSplit(creatorId, title, totalAmount, participantIds);
             return ResponseEntity.ok(split);
