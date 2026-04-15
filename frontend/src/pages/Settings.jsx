@@ -6,10 +6,10 @@ import { useOutletContext } from 'react-router-dom'
 import API_BASE, { apiFetch } from '../api.js'
 
 const THEME_CONFIG = {
-  dark:   { label: 'Dark',   icon: '🌙', swatch: '#0ea5e9', bg: '#020617' },
-  light:  { label: 'Light',  icon: '☀️', swatch: '#0ea5e9', bg: '#f1f5f9' },
-  ocean:  { label: 'Ocean',  icon: '🌊', swatch: '#06b6d4', bg: '#0d1f3c' },
-  rose:   { label: 'Rose',   icon: '🌸', swatch: '#ec4899', bg: '#1a0a0f' },
+  dark: { label: 'Dark', icon: '🌙', swatch: '#0ea5e9', bg: '#020617' },
+  light: { label: 'Light', icon: '☀️', swatch: '#0ea5e9', bg: '#f1f5f9' },
+  ocean: { label: 'Ocean', icon: '🌊', swatch: '#06b6d4', bg: '#0d1f3c' },
+  rose: { label: 'Rose', icon: '🌸', swatch: '#ec4899', bg: '#1a0a0f' },
   purple: { label: 'Purple', icon: '💜', swatch: '#8b5cf6', bg: '#0d0a1e' },
 }
 
@@ -81,6 +81,28 @@ export default function Settings() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+
+    if (!confirmDelete) return;
+
+    try {
+      const res = await apiFetch(`/user/${user.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error("Delete failed");
+      }
+
+      setToast({ type: 'success', message: 'Account deleted successfully' });
+
+      logout();               // logout user
+      navigate('/register');  // redirect
+    } catch (err) {
+      setToast({ type: 'error', message: 'Failed to delete account' });
+    }
+  };
   const handleRemove = async (id) => {
     setRemovingId(id)
     try {
@@ -410,6 +432,22 @@ export default function Settings() {
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(220,38,38,0.35)' }}
           >
             🚪 Logout from PayFlow
+          </button>
+          <button
+            onClick={handleDeleteAccount}
+            style={{
+              marginTop: '1rem',
+              background: 'rgba(239,68,68,0.1)',
+              color: '#f87171',
+              border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: '0.75rem',
+              padding: '0.875rem 1.5rem',
+              fontWeight: 600,
+              width: '100%',
+              cursor: 'pointer'
+            }}
+          >
+            🗑 Delete Account Permanently
           </button>
           <p style={{ textAlign: 'center', color: 'var(--text-faint)', fontSize: '0.8125rem', marginTop: '0.75rem' }}>
             You'll need to sign in again after logging out.

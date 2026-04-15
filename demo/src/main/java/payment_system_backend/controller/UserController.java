@@ -49,7 +49,7 @@ public class UserController {
             // Frozen account check
             if (user.isFrozen()) {
                 return ResponseEntity.status(403).body(
-                    "Your account has been frozen due to suspicious activity. Please contact support.");
+                        "Your account has been frozen due to suspicious activity. Please contact support.");
             }
 
             // Update last login timestamp
@@ -88,6 +88,17 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
+
+        return userRepository.findById(id)
+                .map(user -> {
+                    userRepository.delete(user);
+                    return ResponseEntity.ok().body("User deleted successfully");
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     /**
      * Bootstrap endpoint: promote any user to ADMIN by email.
      * Protected by a secret key param. Remove or restrict in production.
@@ -107,9 +118,8 @@ public class UserController {
         user.setRole("ADMIN");
         userRepository.save(user);
         return ResponseEntity.ok(Map.of(
-            "message", "User promoted to ADMIN successfully",
-            "email", email,
-            "role", "ADMIN"
-        ));
+                "message", "User promoted to ADMIN successfully",
+                "email", email,
+                "role", "ADMIN"));
     }
 }
