@@ -2,6 +2,8 @@ package payment_system_backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import payment_system_backend.dto.LoginRequest;
 import payment_system_backend.model.User;
@@ -27,6 +29,9 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
@@ -42,7 +47,7 @@ public class UserController {
         try {
             User user = userRepository.findByEmail(request.getEmail());
 
-            if (user == null || !user.getPassword().equals(request.getPassword())) {
+            if (user == null || !passwordMatches(request.getPassword(), user)) {
                 return ResponseEntity.status(401).body("Invalid email or password. Please try again.");
             }
 
@@ -99,18 +104,28 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    private boolean passwordMatches(String rawPassword, User user) {
+        String stored = user.getPassword();
+        if (stored == null) return false;
+        if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+            return passwordEncoder.matches(rawPassword, stored);
+        }
+        boolean legacyMatch = stored.equals(rawPassword);
+        if (legacyMatch) {
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            userRepository.save(user);
+        }
+        return legacyMatch;
+    }
+
     /**
-     * Bootstrap endpoint: promote any user to ADMIN by email.
-     * Protected by a secret key param. Remove or restrict in production.
-     * Usage: POST /user/make-admin?email=you@example.com&secret=payflow-admin-2024
+     * Promote a user to ADMIN. First registered user is already auto-admin;
+     * further promotions require an existing admin JWT.
      */
     @PostMapping("/make-admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> makeAdmin(
-            @RequestParam String email,
-            @RequestParam String secret) {
-        if (!"payflow-admin-2024".equals(secret)) {
-            return ResponseEntity.status(403).body(Map.of("error", "Invalid secret key"));
-        }
+            @RequestParam String email) {
         User user = userRepository.findByEmail(email);
         if (user == null) {
             return ResponseEntity.status(404).body(Map.of("error", "User not found: " + email));

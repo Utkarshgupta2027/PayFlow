@@ -2,9 +2,12 @@ package payment_system_backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import payment_system_backend.model.Transaction;
+import payment_system_backend.model.User;
 import payment_system_backend.repository.TransactionRepository;
+import payment_system_backend.repository.UserRepository;
 import payment_system_backend.service.FraudDetectionService;
 import payment_system_backend.service.RewardService;
 import payment_system_backend.service.TransactionService;
@@ -24,6 +27,9 @@ public class TransactionController {
     private TransactionRepository transactionRepo;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private RewardService rewardService;
 
     @Autowired
@@ -36,11 +42,13 @@ public class TransactionController {
             @RequestParam("senderId") Long senderId,
             @RequestParam("receiverId") Long receiverId,
             @RequestParam("amount") double amount,
-            @RequestParam(value = "description", required = false) String description) {
+            @RequestParam(value = "description", required = false) String description,
+            Authentication authentication) {
         try {
-            Transaction tx = transactionService.sendMoney(senderId, receiverId, amount, description);
+            User sender = currentUser(authentication);
+            Transaction tx = transactionService.sendMoney(sender.getId(), receiverId, amount, description);
 
-            int pointsAwarded = rewardService.awardTransactionPoints(senderId, amount);
+            int pointsAwarded = rewardService.awardTransactionPoints(sender.getId(), amount);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Payment Successful");
@@ -48,7 +56,7 @@ public class TransactionController {
             response.put("riskScore", tx.getRiskScore());
             response.put("riskLevel", tx.getRiskLevel());
             response.put("pointsAwarded", pointsAwarded);
-            response.put("totalPoints", rewardService.getTotalPoints(senderId));
+            response.put("totalPoints", rewardService.getTotalPoints(sender.getId()));
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
@@ -63,12 +71,12 @@ public class TransactionController {
     @GetMapping("/risk-preview")
     public ResponseEntity<Map<String, Object>> riskPreview(
             @RequestParam Long senderId,
-            @RequestParam double amount) {
+            @RequestParam double amount,
+            Authentication authentication) {
         try {
-            var sender = transactionRepo.findBySenderId(senderId); // just to get account age
-            // We call the repo directly for account age
+            User sender = currentUser(authentication);
             FraudDetectionService.RiskAssessment risk =
-                fraudDetectionService.assess(senderId, amount, 0);
+                fraudDetectionService.assess(sender.getId(), amount, sender.getAccountAgeDays());
 
             Map<String, Object> result = new HashMap<>();
             result.put("score", risk.score);
@@ -83,7 +91,12 @@ public class TransactionController {
     // ─── History ─────────────────────────────────────────────────────────────
 
     @GetMapping("/history/{userId}")
-    public List<Transaction> history(@PathVariable("userId") Long userId) {
+    public List<Transaction> history(@PathVariable("userId") Long userId,
+                                     Authentication authentication) {
+        User user = currentUser(authentication);
+        if (!user.getId().equals(userId) && !"ADMIN".equals(user.getRole())) {
+            throw new RuntimeException("You can only view your own transaction history");
+        }
         List<Transaction> all = new ArrayList<>();
         all.addAll(transactionRepo.findBySenderId(userId));
         all.addAll(transactionRepo.findByReceiverId(userId));
@@ -96,9 +109,11 @@ public class TransactionController {
 
     @PostMapping("/refund/{txId}")
     public ResponseEntity<?> requestRefund(@PathVariable Long txId,
-                                            @RequestParam Long userId) {
+                                            @RequestParam Long userId,
+                                            Authentication authentication) {
         try {
-            Transaction tx = transactionService.requestRefund(txId, userId);
+            User user = currentUser(authentication);
+            Transaction tx = transactionService.requestRefund(txId, user.getId());
             return ResponseEntity.ok(Map.of(
                 "message", "Refund requested successfully. Pending admin approval.",
                 "refundStatus", tx.getRefundStatus()
@@ -208,5 +223,19 @@ public class TransactionController {
         response.put("monthlyChangePercent", Math.round(changePercent * 10.0) / 10.0);
 
         return ResponseEntity.ok(response);
+    }
+
+    private User currentUser(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new RuntimeException("Authentication required");
+        }
+        User user = userRepository.findByEmail(authentication.getName());
+        if (user == null) {
+            user = userRepository.findByPhoneNumber(authentication.getName());
+        }
+        if (user == null) {
+            throw new RuntimeException("Authenticated user not found");
+        }
+        return user;
     }
 }

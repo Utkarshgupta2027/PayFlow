@@ -12,10 +12,10 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:mysecretkeymysecretkeymysecretkey123}")
+    @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.refresh-secret:refreshsecretrefreshsecretrefresh1}")
+    @Value("${jwt.refresh-secret}")
     private String refreshSecret;
 
     // 10 days for access token

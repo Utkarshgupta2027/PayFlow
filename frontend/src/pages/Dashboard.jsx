@@ -27,6 +27,18 @@ export default function Dashboard() {
 
   const PRESETS = [500, 1000, 2000, 5000]
 
+  const loadRazorpayCheckout = () => new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(true)
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve(true)
+    script.onerror = () => reject(new Error('Unable to load Razorpay checkout'))
+    document.body.appendChild(script)
+  })
+
   // Fetch user balance
   useEffect(() => {
     if (!user?.id) return
@@ -86,6 +98,79 @@ export default function Dashboard() {
       }, 1600)
     } catch {
       setToast({ type: 'error', icon: '❌', message: 'Failed to add money. Try again.', duration: 3000 })
+    } finally {
+      setAddLoading(false)
+    }
+  }
+
+  const handleAddMoneyGateway = async () => {
+    const amt = parseFloat(addAmount)
+    if (!amt || amt <= 0) return
+    setAddLoading(true)
+    try {
+      await loadRazorpayCheckout()
+
+      const orderRes = await apiFetch('/wallet/payment/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amt })
+      })
+      if (!orderRes.ok) {
+        const data = await orderRes.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to create payment order')
+      }
+      const order = await orderRes.json()
+
+      const paymentResult = await new Promise((resolve, reject) => {
+        const checkout = new window.Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'PayFlow',
+          description: 'Wallet top-up',
+          order_id: order.orderId,
+          prefill: {
+            name: user?.name || order.name || '',
+            email: user?.email || order.email || ''
+          },
+          theme: { color: '#0ea5e9' },
+          handler: resolve,
+          modal: {
+            ondismiss: () => reject(new Error('Payment cancelled'))
+          }
+        })
+        checkout.on('payment.failed', (response) => {
+          reject(new Error(response?.error?.description || 'Payment failed'))
+        })
+        checkout.open()
+      })
+
+      const verifyRes = await apiFetch('/wallet/payment/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          razorpayOrderId: paymentResult.razorpay_order_id,
+          razorpayPaymentId: paymentResult.razorpay_payment_id,
+          razorpaySignature: paymentResult.razorpay_signature
+        })
+      })
+      if (!verifyRes.ok) {
+        const data = await verifyRes.json().catch(() => ({}))
+        throw new Error(data.error || 'Payment verification failed')
+      }
+
+      const updated = await verifyRes.json()
+      updateUser(updated)
+      setAddSuccess(true)
+      setTimeout(() => {
+        setAddSuccess(false)
+        setShowAddMoney(false)
+        setAddAmount('')
+        setRefreshBalance(r => r + 1)
+        setToast({ type: 'success', icon: 'ðŸ’°', message: `${fmtCurrency(amt)} added to your wallet!`, duration: 3500 })
+      }, 1600)
+    } catch (err) {
+      setToast({ type: 'error', icon: 'âŒ', message: err.message || 'Failed to add money. Try again.', duration: 3000 })
     } finally {
       setAddLoading(false)
     }
@@ -397,7 +482,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     className="btn-primary"
-                    onClick={handleAddMoney}
+                    onClick={handleAddMoneyGateway}
                     disabled={addLoading || !addAmount || parseFloat(addAmount) <= 0}
                     style={{ flex: 2, fontSize: '1rem', padding: '0.875rem' }}
                   >

@@ -38,6 +38,28 @@ public class Transaction {
     @Column(name = "refund_requested_by")
     private Long refundRequestedBy;
 
+    // Payment gateway metadata for real money flows such as wallet top-ups.
+    @Column(name = "gateway_provider", length = 30)
+    private String gatewayProvider;
+
+    @Column(name = "gateway_order_id", unique = true, length = 100)
+    private String gatewayOrderId;
+
+    @Column(name = "gateway_payment_id", length = 100)
+    private String gatewayPaymentId;
+
+    @Column(name = "gateway_signature", length = 255)
+    private String gatewaySignature;
+
+    @Column(name = "gateway_status", length = 30)
+    private String gatewayStatus;
+
+    @Column(name = "failure_reason", length = 255)
+    private String failureReason;
+
+    @Column(length = 3)
+    private String currency = "INR";
+
     // ─── Getters ─────────────────────────────────────────────────────────────
 
     public Long getId() { return id; }
@@ -52,6 +74,13 @@ public class Transaction {
     public String getDescription() { return description; }
     public String getRefundStatus() { return refundStatus; }
     public Long getRefundRequestedBy() { return refundRequestedBy; }
+    public String getGatewayProvider() { return gatewayProvider; }
+    public String getGatewayOrderId() { return gatewayOrderId; }
+    public String getGatewayPaymentId() { return gatewayPaymentId; }
+    public String getGatewaySignature() { return gatewaySignature; }
+    public String getGatewayStatus() { return gatewayStatus; }
+    public String getFailureReason() { return failureReason; }
+    public String getCurrency() { return currency; }
 
     // ─── Setters ─────────────────────────────────────────────────────────────
 
@@ -66,4 +95,11 @@ public class Transaction {
     public void setDescription(String description) { this.description = description; }
     public void setRefundStatus(String refundStatus) { this.refundStatus = refundStatus; }
     public void setRefundRequestedBy(Long refundRequestedBy) { this.refundRequestedBy = refundRequestedBy; }
+    public void setGatewayProvider(String gatewayProvider) { this.gatewayProvider = gatewayProvider; }
+    public void setGatewayOrderId(String gatewayOrderId) { this.gatewayOrderId = gatewayOrderId; }
+    public void setGatewayPaymentId(String gatewayPaymentId) { this.gatewayPaymentId = gatewayPaymentId; }
+    public void setGatewaySignature(String gatewaySignature) { this.gatewaySignature = gatewaySignature; }
+    public void setGatewayStatus(String gatewayStatus) { this.gatewayStatus = gatewayStatus; }
+    public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
+    public void setCurrency(String currency) { this.currency = currency; }
 }

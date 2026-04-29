@@ -5,6 +5,7 @@ import payment_system_backend.model.Transaction;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
@@ -19,4 +20,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // For analytics — sent transactions within a date range
     List<Transaction> findBySenderIdAndTimeBetween(Long senderId, LocalDateTime from, LocalDateTime to);
+
+    Optional<Transaction> findByGatewayOrderId(String gatewayOrderId);
+    Optional<Transaction> findByGatewayPaymentId(String gatewayPaymentId);
 }
