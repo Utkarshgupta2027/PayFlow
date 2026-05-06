@@ -482,7 +482,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     className="btn-primary"
-                    onClick={handleAddMoneyGateway}
+                    onClick={handleAddMoney}
                     disabled={addLoading || !addAmount || parseFloat(addAmount) <= 0}
                     style={{ flex: 2, fontSize: '1rem', padding: '0.875rem' }}
                   >

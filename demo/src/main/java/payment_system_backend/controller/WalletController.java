@@ -37,8 +37,8 @@ public class WalletController {
      */
     @PostMapping("/addMoney")
     public ResponseEntity<?> addMoney(@RequestBody AddMoneyRequest request){
-        return ResponseEntity.status(410).body(Map.of(
-                "error", "Direct wallet credit is disabled. Use verified payment gateway flow."));
+        User updatedUser = walletService.addMoney(request.getUserId(), request.getAmount());
+        return ResponseEntity.ok(updatedUser);
     }
 
     @PostMapping("/payment/order")
