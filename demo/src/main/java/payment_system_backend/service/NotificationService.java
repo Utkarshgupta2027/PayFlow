@@ -1,8 +1,10 @@
 package payment_system_backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import payment_system_backend.model.Notification;
@@ -25,6 +27,9 @@ public class NotificationService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Value("${spring.mail.username:}")
+    private String fromEmail;
 
     /**
      * Creates a persistent in-app notification AND pushes it to the user's
@@ -75,11 +80,18 @@ public class NotificationService {
     public void sendEmail(String to, String subject, String body) {
         if (mailSender == null || to == null || to.isBlank()) return;
         try {
-            SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setTo(to);
-            msg.setSubject(subject);
-            msg.setText(body);
-            mailSender.send(msg);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, false); // false = plain text
+            
+            if (fromEmail != null && !fromEmail.isBlank()) {
+                helper.setFrom(fromEmail, "PayFlow");
+            }
+            
+            mailSender.send(message);
         } catch (Exception e) {
             // Log but don't crash — SMTP may not be configured
             System.err.println("[NotificationService] Email send failed: " + e.getMessage());

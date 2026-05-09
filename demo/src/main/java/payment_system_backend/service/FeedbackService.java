@@ -105,7 +105,7 @@ public class FeedbackService {
 
         notificationService.sendEmail(
             adminEmail, 
-            "[Feedback] " + fb.getSubject(), 
+            "PayFlow feedback: " + fb.getSubject(), 
             body
         );
     }
