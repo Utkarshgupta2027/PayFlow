@@ -16,8 +16,8 @@ public class FeedbackService {
     @Autowired
     private FeedbackRepository feedbackRepository;
 
-    @Autowired(required = false)
-    private JavaMailSender mailSender;
+    @Autowired
+    private NotificationService notificationService;
 
     @Value("${spring.mail.username}")
     private String adminEmail;
@@ -81,9 +81,7 @@ public class FeedbackService {
 
     private void sendAdminNotification(Feedback fb) {
 
-        if (mailSender == null
-                || adminEmail == null
-                || adminEmail.isBlank()) {
+        if (adminEmail == null || adminEmail.isBlank()) {
             return;
         }
 
@@ -105,29 +103,18 @@ public class FeedbackService {
 
                 + "Feedback ID : #" + fb.getId();
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-
-        msg.setTo(adminEmail);
-
-        msg.setFrom(adminEmail);
-
-        msg.setReplyTo(fb.getEmail());
-
-        msg.setSubject(
-                "[Feedback] " + fb.getSubject());
-
-        msg.setText(body);
-
-        mailSender.send(msg);
+        notificationService.sendEmail(
+            adminEmail, 
+            "[Feedback] " + fb.getSubject(), 
+            body
+        );
     }
 
     // USER CONFIRMATION MAIL
 
     private void sendUserConfirmation(Feedback fb) {
 
-        if (mailSender == null
-                || adminEmail == null
-                || adminEmail.isBlank()) {
+        if (adminEmail == null || adminEmail.isBlank()) {
             return;
         }
 
@@ -144,17 +131,10 @@ public class FeedbackService {
                 + "Regards,\n"
                 + "Payment System Team";
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-
-        msg.setTo(fb.getEmail());
-
-        msg.setFrom(adminEmail);
-
-        msg.setSubject(
-                "Feedback Received Successfully");
-
-        msg.setText(body);
-
-        mailSender.send(msg);
+        notificationService.sendEmail(
+            fb.getEmail(), 
+            "Feedback Received Successfully", 
+            body
+        );
     }
 }
