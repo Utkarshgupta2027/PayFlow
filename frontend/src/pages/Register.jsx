@@ -45,7 +45,10 @@ export default function Register() {
       return setError('Please enter a valid email address.')
     if (password.trim().length < 6) return setError('Password must be at least 6 characters.')
     if (password !== confirmPwd)    return setError('Passwords do not match.')
-    if (!otp.trim())                return setError('Please enter the OTP sent to your email.')
+    if (!otp.trim()) {
+      if (!otpSent) return setError('Please click "Send OTP" to verify your email first.')
+      return setError('Please enter the OTP sent to your email.')
+    }
 
     setLoading(true)
     try {
@@ -158,33 +161,38 @@ export default function Register() {
                 type="button"
                 onClick={handleSendOtp}
                 disabled={sendingOtp || otpSent}
-                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.8rem', cursor: sendingOtp || otpSent ? 'not-allowed' : 'pointer', opacity: sendingOtp || otpSent ? 0.7 : 1 }}
+                style={{ 
+                  position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', 
+                  background: otpSent ? '#10b981' : '#3b82f6', color: '#fff', border: 'none', 
+                  borderRadius: '0.5rem', padding: '0.35rem 0.75rem', fontSize: '0.85rem', 
+                  fontWeight: '600', cursor: sendingOtp || otpSent ? 'not-allowed' : 'pointer', 
+                  opacity: sendingOtp ? 0.7 : 1, transition: 'background 0.2s'
+                }}
               >
-                {sendingOtp ? 'Sending...' : otpSent ? 'Sent' : 'Send OTP'}
+                {sendingOtp ? 'Sending...' : otpSent ? 'OTP Sent ✓' : 'Send OTP'}
               </button>
             </div>
           </div>
 
           {/* OTP */}
-          {otpSent && (
-            <div className="animate-slide-up">
-              <label className="label">Verification OTP</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem', pointerEvents: 'none' }}>🔑</span>
-                <input
-                  id="reg-otp"
-                  className="input-field"
-                  type="text"
-                  placeholder="6-digit OTP"
-                  value={otp}
-                  onChange={e => setOtp(e.target.value)}
-                  style={{ paddingLeft: '2.5rem' }}
-                  maxLength={6}
-                  required
-                />
-              </div>
+          <div className="animate-slide-up">
+            <label className="label">Verification OTP</label>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem', pointerEvents: 'none', opacity: otpSent ? 1 : 0.5 }}>🔑</span>
+              <input
+                id="reg-otp"
+                className="input-field"
+                type="text"
+                placeholder={otpSent ? "Enter 6-digit OTP" : "Click 'Send OTP' first"}
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                style={{ paddingLeft: '2.5rem', opacity: otpSent ? 1 : 0.6 }}
+                maxLength={6}
+                disabled={!otpSent}
+                required
+              />
             </div>
-          )}
+          </div>
 
           {/* Password */}
           <div>

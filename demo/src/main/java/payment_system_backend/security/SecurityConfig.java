@@ -31,7 +31,8 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers(
                     "/user/register", "/user/login", "/user/refresh",
-                    "/otp/**", "/ws/**", "/qr/**", "/wallet/payment/webhook",
+                    "/otp/**", "/api/email-otp/**", "/user/forgot-password/**", 
+                    "/ws/**", "/qr/**", "/wallet/payment/webhook",
                     "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                 ).permitAll()
                 // Admin only
