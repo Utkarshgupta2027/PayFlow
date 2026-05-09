@@ -17,8 +17,8 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    /** Register via email + password. */
     public User registerUser(User user) {
-        // Check if email is already registered
         if (userRepository.findByEmail(user.getEmail()) != null) {
             throw new RuntimeException("Email already registered. Please use a different email.");
         }
@@ -26,6 +26,26 @@ public class UserService {
         user.setBalance(0);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
+        assignReferralCodeAndRole(user);
+        return userRepository.save(user);
+    }
+
+    /** Register via phone number + password (no OTP required). */
+    public User registerPhoneUser(User user) {
+        if (userRepository.findByPhoneNumber(user.getPhoneNumber()) != null) {
+            throw new RuntimeException("This phone number is already registered.");
+        }
+
+        user.setBalance(0);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        assignReferralCodeAndRole(user);
+        return userRepository.save(user);
+    }
+
+    // ─── Internal helpers ─────────────────────────────────────────────────────
+
+    private void assignReferralCodeAndRole(User user) {
         // Auto-generate unique referral code
         String code;
         do {
@@ -39,7 +59,5 @@ public class UserService {
         } else {
             user.setRole("USER");
         }
-
-        return userRepository.save(user);
     }
 }

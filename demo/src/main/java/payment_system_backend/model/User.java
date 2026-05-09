@@ -36,6 +36,10 @@ public class User {
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean frozen = false;
 
+    // Transaction PIN (BCrypt hashed, nullable — absent means PIN not yet set)
+    @Column(name = "transaction_pin")
+    private String transactionPin;
+
     // Device / session tracking
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
@@ -53,6 +57,7 @@ public class User {
     public String getReferredBy() { return referredBy; }
     public String getRole() { return role; }
     public boolean isFrozen() { return frozen; }
+    public String getTransactionPin() { return transactionPin; }
     public LocalDateTime getLastLoginAt() { return lastLoginAt; }
 
     // ─── Setters ─────────────────────────────────────────────────────────────
@@ -68,5 +73,6 @@ public class User {
     public void setReferredBy(String referredBy) { this.referredBy = referredBy; }
     public void setRole(String role) { this.role = role; }
     public void setFrozen(boolean frozen) { this.frozen = frozen; }
+    public void setTransactionPin(String transactionPin) { this.transactionPin = transactionPin; }
     public void setLastLoginAt(LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
 }

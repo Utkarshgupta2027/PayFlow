@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../api.js'
 import API_BASE from '../api.js'
+import PinModal from '../components/PinModal.jsx'
 
 function fmtCurrency(n) {
   return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 })
@@ -45,6 +46,12 @@ export default function SendMoney() {
   const [risk, setRisk] = useState(null)
   const riskTimer = useRef(null)
 
+  // PIN modal state
+  const [pinRequired, setPinRequired] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pinError, setPinError] = useState('')
+  const [pendingParams, setPendingParams] = useState(null)
+
   // Pre-fill receiverId from QR scan URL param
   useEffect(() => {
     const rid = searchParams.get('receiverId')
@@ -57,6 +64,15 @@ export default function SendMoney() {
         .catch(() => {})
     }
   }, [])
+
+  // Check whether this user has a Transaction PIN set
+  useEffect(() => {
+    if (!user?.id) return
+    apiFetch('/user/pin-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setPinRequired(!!d.pinSet) })
+      .catch(() => {})
+  }, [user?.id])
 
   // Live risk preview — debounced 600ms after amount changes
   useEffect(() => {
@@ -85,20 +101,53 @@ export default function SendMoney() {
     if (String(form.receiverId) === String(user?.id)) { setError('Cannot send to yourself'); return }
     if (risk?.level === 'HIGH') { setError('Transaction blocked due to high fraud risk. Please contact support.'); return }
 
+    const params = new URLSearchParams({
+      senderId: user.id,
+      receiverId: form.receiverId,
+      amount: form.amount,
+      ...(form.description ? { description: form.description } : {})
+    })
+
+    if (pinRequired) {
+      // Store params and open PIN modal — actual submission happens in handlePinConfirm
+      setPendingParams(params)
+      setPinError('')
+      setShowPinModal(true)
+      return
+    }
+
+    // No PIN set — submit directly
+    await submitPayment(params)
+  }
+
+  const handlePinConfirm = async (pin) => {
+    setPinError('')
+    const params = pendingParams
+    params.set('transactionPin', pin)
+    await submitPayment(params, () => setShowPinModal(false))
+  }
+
+  const submitPayment = async (params, onSuccess) => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({
-        senderId: user.id,
-        receiverId: form.receiverId,
-        amount: form.amount,
-        ...(form.description ? { description: form.description } : {})
-      })
       const res = await apiFetch(`/transaction/send?${params}`, { method: 'POST' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || await res.text() || 'Transaction failed')
+        const msg = data.error || await res.text() || 'Transaction failed'
+        if (res.status === 403 && showPinModal) {
+          setPinError('Incorrect PIN. Please try again.')
+          return
+        }
+        throw new Error(msg)
       }
+      const sentAmount = parseFloat(params.get('amount') || 0)
       const data = await res.json()
+      // Inject the sent amount so the success banner always has it,
+      // even though the backend response doesn't include it.
+      data.amount = sentAmount
+      onSuccess?.()
+      setShowPinModal(false)
+      setPendingParams(null)
       setSuccess(data)
       setForm({ receiverId: '', amount: '', description: '' })
       setRisk(null)
@@ -297,6 +346,17 @@ export default function SendMoney() {
         </div>
         <div style={{ marginLeft: 'auto', color: 'var(--text-faint)' }}>→</div>
       </div>
+
+      {/* Transaction PIN Modal */}
+      <PinModal
+        isOpen={showPinModal}
+        onConfirm={handlePinConfirm}
+        onCancel={() => { setShowPinModal(false); setPendingParams(null); setLoading(false) }}
+        error={pinError}
+        loading={loading}
+        title="🔐 Transaction PIN"
+        subtitle={`Confirm payment of ₹${Number(pendingParams?.get('amount') || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
+      />
     </div>
   )
 }

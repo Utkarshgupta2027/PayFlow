@@ -3,6 +3,7 @@ package payment_system_backend.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import payment_system_backend.model.Transaction;
 import payment_system_backend.model.User;
@@ -35,6 +36,9 @@ public class TransactionController {
     @Autowired
     private FraudDetectionService fraudDetectionService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     // ─── Send Money ───────────────────────────────────────────────────────────
 
     @PostMapping("/send")
@@ -43,9 +47,22 @@ public class TransactionController {
             @RequestParam("receiverId") Long receiverId,
             @RequestParam("amount") double amount,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "transactionPin", required = false) String transactionPin,
             Authentication authentication) {
         try {
             User sender = currentUser(authentication);
+
+            // ── Transaction PIN verification ─────────────────────────────────
+            if (sender.getTransactionPin() != null) {
+                if (transactionPin == null || transactionPin.isBlank()) {
+                    return ResponseEntity.status(403).body(
+                            Map.of("error", "Transaction PIN is required."));
+                }
+                if (!passwordEncoder.matches(transactionPin, sender.getTransactionPin())) {
+                    return ResponseEntity.status(403).body(
+                            Map.of("error", "Incorrect Transaction PIN."));
+                }
+            }
             Transaction tx = transactionService.sendMoney(sender.getId(), receiverId, amount, description);
 
             int pointsAwarded = rewardService.awardTransactionPoints(sender.getId(), amount);

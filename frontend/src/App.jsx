@@ -13,6 +13,7 @@ import QRPage from './pages/QRPage.jsx'
 import AdminPanel from './pages/AdminPanel.jsx'
 import Notifications from './pages/Notifications.jsx'
 import SplitPayment from './pages/SplitPayment.jsx'
+import RequestMoney from './pages/RequestMoney.jsx'
 import Layout from './components/Layout.jsx'
 
 function PrivateRoute({ children }) {
@@ -47,6 +48,7 @@ export default function App() {
               <Route path="referral" element={<Referral />} />
               <Route path="settings" element={<Settings />} />
               <Route path="send" element={<SendMoney />} />
+              <Route path="request" element={<RequestMoney />} />
               <Route path="qr" element={<QRPage />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="split" element={<SplitPayment />} />

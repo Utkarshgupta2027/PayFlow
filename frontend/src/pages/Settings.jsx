@@ -38,6 +38,14 @@ export default function Settings() {
   const [bankError, setBankError] = useState('')
   const [removingId, setRemovingId] = useState(null)
 
+  // Transaction PIN
+  const [pinSet, setPinSet] = useState(false)
+  const [showPinForm, setShowPinForm] = useState(false)
+  const [pinForm, setPinForm] = useState({ currentPin: '', newPin: '', confirmPin: '' })
+  const [pinLoading, setPinLoading] = useState(false)
+  const [pinError, setPinError] = useState('')
+  const [pinSuccess, setPinSuccess] = useState('')
+
   const fetchAccounts = () => {
     if (!user?.id) return
     apiFetch(`/bank/accounts/${user.id}`)
@@ -48,6 +56,44 @@ export default function Settings() {
   }
 
   useEffect(() => { fetchAccounts() }, [user?.id])
+
+  // Fetch PIN status
+  useEffect(() => {
+    if (!user?.id) return
+    apiFetch('/user/pin-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setPinSet(!!d.pinSet) })
+      .catch(() => {})
+  }, [user?.id])
+
+  const handleSavePin = async (e) => {
+    e.preventDefault()
+    setPinError('')
+    setPinSuccess('')
+    if (!pinForm.newPin.match(/^\d{4,6}$/)) { setPinError('PIN must be 4-6 digits.'); return }
+    if (pinForm.newPin !== pinForm.confirmPin) { setPinError('PINs do not match.'); return }
+    setPinLoading(true)
+    try {
+      const body = { newPin: pinForm.newPin }
+      if (pinSet) body.currentPin = pinForm.currentPin
+      const res = await apiFetch('/user/set-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const d = await res.json()
+      if (!res.ok) { setPinError(d.error || 'Failed to set PIN.'); return }
+      setPinSet(true)
+      setPinSuccess(pinSet ? 'PIN changed successfully!' : 'Transaction PIN set successfully!')
+      setPinForm({ currentPin: '', newPin: '', confirmPin: '' })
+      setShowPinForm(false)
+      setToast({ type: 'success', icon: '🔐', message: pinSet ? 'Transaction PIN updated!' : 'Transaction PIN set!', duration: 3000 })
+    } catch {
+      setPinError('Failed to set PIN. Try again.')
+    } finally {
+      setPinLoading(false)
+    }
+  }
 
   const handleLogout = () => { logout(); navigate('/login') }
 
@@ -349,6 +395,135 @@ export default function Settings() {
                   type="button"
                   className="btn-secondary"
                   onClick={() => { setShowAddBank(false); setBankForm(emptyForm); setBankError('') }}
+                  style={{ width: 'auto', padding: '0 1.25rem' }}
+                >Cancel</button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {/* ════════════ TRANSACTION PIN ════════════ */}
+      <div className="settings-section" style={{ marginBottom: '1rem' }}>
+        <div className="settings-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>🔐 Transaction PIN</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {pinSet && (
+              <span style={{
+                background: 'rgba(16,185,129,0.15)', color: '#34d399',
+                border: '1px solid rgba(16,185,129,0.3)',
+                borderRadius: '99px', padding: '0.125rem 0.625rem',
+                fontSize: '0.7rem', fontWeight: 700
+              }}>✓ PIN Active</span>
+            )}
+            <button
+              onClick={() => { setShowPinForm(v => !v); setPinError(''); setPinSuccess('') }}
+              style={{
+                background: showPinForm ? 'rgba(239,68,68,0.15)' : 'var(--accent-glow)',
+                color: showPinForm ? '#f87171' : 'var(--accent-light)',
+                border: `1px solid ${showPinForm ? 'rgba(239,68,68,0.3)' : 'var(--accent)'}`,
+                borderRadius: '0.5rem', padding: '0.25rem 0.75rem',
+                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer'
+              }}
+            >
+              {showPinForm ? '✕ Cancel' : pinSet ? '🔄 Change PIN' : '+ Set PIN'}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ padding: '0.5rem 1.5rem 1.25rem' }}>
+          {!showPinForm && !pinSet && (
+            <div style={{
+              textAlign: 'center', padding: '1.5rem',
+              background: 'var(--bg-input)', borderRadius: '0.875rem',
+              color: 'var(--text-faint)', fontSize: '0.875rem'
+            }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔐</div>
+              No Transaction PIN set.<br />
+              <span style={{ fontSize: '0.8rem' }}>Add a PIN to secure every payment.</span>
+            </div>
+          )}
+
+          {pinSuccess && !showPinForm && (
+            <div className="alert-success animate-slide-up">{pinSuccess}</div>
+          )}
+
+          {showPinForm && (
+            <form onSubmit={handleSavePin} style={{
+              background: 'var(--bg-input)', borderRadius: '1rem',
+              padding: '1.25rem', border: '1px solid var(--border-color)',
+              display: 'flex', flexDirection: 'column', gap: '1rem'
+            }}>
+              <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0 }}>
+                {pinSet ? '🔄 Change Transaction PIN' : '🔐 Set Transaction PIN'}
+              </h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-faint)', margin: 0 }}>
+                You'll enter this PIN every time you send money.
+              </p>
+
+              {pinError && <div className="alert-error animate-slide-up">{pinError}</div>}
+
+              {pinSet && (
+                <div>
+                  <label className="label">Current PIN</label>
+                  <input
+                    id="settings-current-pin"
+                    className="input-field"
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="Enter current PIN"
+                    maxLength={6}
+                    value={pinForm.currentPin}
+                    onChange={e => setPinForm(f => ({ ...f, currentPin: e.target.value.replace(/\D/g, '') }))}
+                    required
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem' }}>
+                <div>
+                  <label className="label">New PIN (4-6 digits)</label>
+                  <input
+                    id="settings-new-pin"
+                    className="input-field"
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="e.g. 1234"
+                    maxLength={6}
+                    value={pinForm.newPin}
+                    onChange={e => setPinForm(f => ({ ...f, newPin: e.target.value.replace(/\D/g, '') }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="label">Confirm New PIN</label>
+                  <input
+                    id="settings-confirm-pin"
+                    className="input-field"
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="Re-enter PIN"
+                    maxLength={6}
+                    onPaste={e => e.preventDefault()}
+                    value={pinForm.confirmPin}
+                    onChange={e => setPinForm(f => ({ ...f, confirmPin: e.target.value.replace(/\D/g, '') }))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-faint)', margin: 0 }}>
+                🔒 Your PIN is encrypted with BCrypt and never stored in plain text.
+              </p>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button className="btn-primary" type="submit" disabled={pinLoading} style={{ flex: 1 }}>
+                  {pinLoading ? <><span className="animate-spin">⟳</span> Saving...</> : '🔐 Save PIN'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => { setShowPinForm(false); setPinForm({ currentPin: '', newPin: '', confirmPin: '' }); setPinError('') }}
                   style={{ width: 'auto', padding: '0 1.25rem' }}
                 >Cancel</button>
               </div>

@@ -1476,3 +1476,107 @@ body {
 .risk-high { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
 .risk-score-bar { height: 5px; background: var(--bg-input); border-radius: 99px; overflow: hidden; }
 .risk-score-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+
+/* ══════════════════════════════════════════════
+   Transaction PIN Modal
+══════════════════════════════════════════════ */
+.pin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: pinOverlayIn 0.2s ease-out;
+}
+
+@keyframes pinOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pin-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 1.5rem;
+  padding: 2rem 2.25rem;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  animation: pinModalIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pinModalIn {
+  from { opacity: 0; transform: scale(0.88) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Shake animation for wrong PIN */
+.pin-modal-shake {
+  animation: pinShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes pinShake {
+  10%, 90%  { transform: translateX(-3px); }
+  20%, 80%  { transform: translateX(5px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60%  { transform: translateX(7px); }
+  100%      { transform: translateX(0); }
+}
+
+/* PIN digit input group */
+.pin-input-group {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+.pin-digit {
+  width: 3.25rem;
+  height: 3.75rem;
+  border-radius: 0.875rem;
+  border: 2px solid var(--border-input);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  caret-color: transparent;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s, transform 0.15s;
+  font-family: 'Inter', monospace;
+  letter-spacing: 0.1em;
+}
+
+.pin-digit:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: var(--bg-surface);
+}
+
+.pin-digit-filled {
+  border-color: var(--accent);
+  background: var(--bg-surface);
+  transform: scale(1.04);
+}
+
+/* PIN error text */
+.pin-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 0.875rem;
+}

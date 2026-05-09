@@ -8,7 +8,9 @@ import payment_system_backend.model.User;
 import payment_system_backend.repository.UserRepository;
 import payment_system_backend.security.JwtUtil;
 import payment_system_backend.service.OtpService;
+import payment_system_backend.service.UserService;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +23,9 @@ public class OtpController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -45,8 +50,9 @@ public class OtpController {
 
     /**
      * POST /otp/register
-     * Body: { "name", "email", "password", "phoneNumber", "otp" }
-     * Verifies OTP then registers the user with their phone number.
+     * Body: { "name", "phoneNumber", "otp" }
+     * Verifies OTP then registers the user — delegates to UserService so that
+     * referral code generation and first-user ADMIN assignment work correctly.
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerWithOtp(@RequestBody OtpRequest request) {
@@ -59,27 +65,34 @@ public class OtpController {
             return ResponseEntity.status(400).body("This phone number is already registered.");
         }
 
-        // Check if email already registered
-        if (request.getEmail() != null && !request.getEmail().isBlank()
-                && userRepository.findByEmail(request.getEmail()) != null) {
-            return ResponseEntity.status(400).body("Email already registered. Please use a different email.");
-        }
-
         User user = new User();
         user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
         user.setPhoneNumber(request.getPhoneNumber());
+        // No password required for phone-OTP users
         user.setBalance(0);
 
-        User saved = userRepository.save(user);
-        return ResponseEntity.ok(saved);
+        try {
+            User saved = userService.registerPhoneUser(user);
+
+            // Auto-login: generate tokens immediately after registration
+            String subject = saved.getPhoneNumber();
+            String token = jwtUtil.generateToken(subject);
+            String refreshToken = jwtUtil.generateRefreshToken(subject);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("refreshToken", refreshToken);
+            response.put("user", saved);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(400).body(ex.getMessage());
+        }
     }
 
     /**
      * POST /otp/login
      * Body: { "phoneNumber", "otp" }
-     * Verifies OTP then returns JWT + user object.
+     * Verifies OTP then returns JWT + refreshToken + user object.
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginWithOtp(@RequestBody OtpRequest request) {
@@ -92,10 +105,23 @@ public class OtpController {
             return ResponseEntity.status(404).body("No account found for this phone number. Please register first.");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail() != null ? user.getEmail() : user.getPhoneNumber());
+        // Frozen account check
+        if (user.isFrozen()) {
+            return ResponseEntity.status(403).body(
+                    "Your account has been frozen due to suspicious activity. Please contact support.");
+        }
+
+        // Update last login timestamp
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        String subject = user.getPhoneNumber();
+        String token = jwtUtil.generateToken(subject);
+        String refreshToken = jwtUtil.generateRefreshToken(subject);
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
+        response.put("refreshToken", refreshToken);
         response.put("user", user);
         return ResponseEntity.ok(response);
     }
