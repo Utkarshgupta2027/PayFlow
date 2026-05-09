@@ -74,10 +74,14 @@ public class NotificationService {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Sends an email. Fails silently if SMTP is not configured.
-     */
     public void sendEmail(String to, String subject, String body) {
+        sendEmail(to, subject, body, null);
+    }
+
+    /**
+     * Sends an email with an optional replyTo address.
+     */
+    public void sendEmail(String to, String subject, String body, String replyTo) {
         if (mailSender == null || to == null || to.isBlank()) return;
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -89,6 +93,9 @@ public class NotificationService {
             
             if (fromEmail != null && !fromEmail.isBlank()) {
                 helper.setFrom(fromEmail, "PayFlow");
+            }
+            if (replyTo != null && !replyTo.isBlank()) {
+                helper.setReplyTo(replyTo);
             }
             
             mailSender.send(message);
