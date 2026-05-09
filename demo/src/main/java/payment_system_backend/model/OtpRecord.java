@@ -11,25 +11,25 @@ public class OtpRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String phoneNumber;
+    private String identifier;
     private String otp;
     private LocalDateTime createdAt;
 
     public OtpRecord() {}
 
-    public OtpRecord(String phoneNumber, String otp, LocalDateTime createdAt) {
-        this.phoneNumber = phoneNumber;
+    public OtpRecord(String identifier, String otp, LocalDateTime createdAt) {
+        this.identifier = identifier;
         this.otp = otp;
         this.createdAt = createdAt;
     }
 
     public Long getId() { return id; }
-    public String getPhoneNumber() { return phoneNumber; }
+    public String getIdentifier() { return identifier; }
     public String getOtp() { return otp; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void setId(Long id) { this.id = id; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setIdentifier(String identifier) { this.identifier = identifier; }
     public void setOtp(String otp) { this.otp = otp; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

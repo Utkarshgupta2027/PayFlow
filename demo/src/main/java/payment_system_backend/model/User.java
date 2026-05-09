@@ -45,6 +45,9 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    @Transient
+    private String otp;
+
     // ─── Getters ─────────────────────────────────────────────────────────────
 
     public Long getId() { return id; }
@@ -61,6 +64,7 @@ public class User {
     @JsonIgnore
     public String getTransactionPin() { return transactionPin; }
     public LocalDateTime getLastLoginAt() { return lastLoginAt; }
+    public String getOtp() { return otp; }
 
     // ─── Setters ─────────────────────────────────────────────────────────────
 
@@ -77,4 +81,5 @@ public class User {
     public void setFrozen(boolean frozen) { this.frozen = frozen; }
     public void setTransactionPin(String transactionPin) { this.transactionPin = transactionPin; }
     public void setLastLoginAt(LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
+    public void setOtp(String otp) { this.otp = otp; }
 }

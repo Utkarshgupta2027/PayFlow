@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import payment_system_backend.model.User;
 import payment_system_backend.repository.UserRepository;
+import payment_system_backend.service.NotificationService;
 
 import java.util.UUID;
 
@@ -17,6 +18,9 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private NotificationService notificationService;
+
     /** Register via email + password. */
     public User registerUser(User user) {
         if (userRepository.findByEmail(user.getEmail()) != null) {
@@ -27,7 +31,18 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         assignReferralCodeAndRole(user);
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Send Welcome Email
+        try {
+            String subject = "Welcome to PayFlow!";
+            String body = "Hi " + savedUser.getName() + ",\n\nWelcome to PayFlow! Your account has been successfully created.\n\nEnjoy seamless payments!";
+            notificationService.sendEmail(savedUser.getEmail(), subject, body);
+        } catch (Exception e) {
+            System.err.println("Failed to send welcome email: " + e.getMessage());
+        }
+
+        return savedUser;
     }
 
     /** Register via phone number + password (no OTP required). */

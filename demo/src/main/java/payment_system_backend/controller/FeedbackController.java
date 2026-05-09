@@ -7,8 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import payment_system_backend.entity.Feedback;
-import payment_system_backend.request.FeedbackRequest;
+import payment_system_backend.model.Feedback;
+import payment_system_backend.dto.FeedbackRequest;
 import payment_system_backend.service.FeedbackService;
 
 @RestController

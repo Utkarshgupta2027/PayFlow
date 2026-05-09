@@ -23,6 +23,7 @@ import payment_system_backend.model.User;
 import payment_system_backend.repository.UserRepository;
 import payment_system_backend.security.JwtUtil;
 import payment_system_backend.service.UserService;
+import payment_system_backend.service.OtpService;
 
 @RestController
 @RequestMapping("/user")
@@ -40,10 +41,25 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private OtpService otpService;
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
             validateRegistrationPayload(user);
+            
+            // Require OTP for email registration
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                if (user.getOtp() == null || user.getOtp().isBlank()) {
+                    return ResponseEntity.badRequest().body("OTP is required for email registration");
+                }
+                boolean isOtpValid = otpService.verifyOtp(user.getEmail(), user.getOtp());
+                if (!isOtpValid) {
+                    return ResponseEntity.badRequest().body("Invalid or expired OTP");
+                }
+            }
+
             User saved = userService.registerUser(user);
             Map<String, Object> response = buildAuthResponse(saved, saved.getEmail());
             return ResponseEntity.ok(response);
@@ -151,6 +167,50 @@ public class UserController {
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
+    }
+
+    @PostMapping("/forgot-password/send-otp")
+    public ResponseEntity<?> sendForgotPasswordOtp(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+        }
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+        }
+        try {
+            otpService.sendEmailOtp(email);
+            return ResponseEntity.ok(Map.of("message", "OTP sent successfully"));
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to send OTP"));
+        }
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String otp = body.get("otp");
+        String newPassword = body.get("newPassword");
+
+        if (email == null || otp == null || newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email, OTP, and new password are required"));
+        }
+
+        boolean isValid = otpService.verifyOtp(email, otp);
+        if (!isValid) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired OTP"));
+        }
+
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 
     private boolean passwordMatches(String rawPassword, User user) {

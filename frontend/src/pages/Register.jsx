@@ -28,6 +28,9 @@ export default function Register() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError]             = useState('')
   const [loading, setLoading]         = useState(false)
+  const [otp, setOtp]                 = useState('')
+  const [otpSent, setOtpSent]         = useState(false)
+  const [sendingOtp, setSendingOtp]   = useState(false)
 
   const { login } = useAuth()
   const navigate  = useNavigate()
@@ -42,13 +45,14 @@ export default function Register() {
       return setError('Please enter a valid email address.')
     if (password.trim().length < 6) return setError('Password must be at least 6 characters.')
     if (password !== confirmPwd)    return setError('Passwords do not match.')
+    if (!otp.trim())                return setError('Please enter the OTP sent to your email.')
 
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE}/user/register`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        body:    JSON.stringify({ name: name.trim(), email: email.trim(), password, otp: otp.trim() }),
       })
 
       if (!res.ok) {
@@ -65,6 +69,31 @@ export default function Register() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSendOtp = async () => {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return setError('Please enter a valid email address first.')
+    }
+    setSendingOtp(true)
+    setError('')
+    try {
+      const res = await fetch(`${API_BASE}/api/email-otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() })
+      })
+      if (!res.ok) {
+        const msg = await extractErrorMessage(res, 'Failed to send OTP.')
+        throw new Error(msg)
+      }
+      setOtpSent(true)
+      alert('OTP sent successfully to ' + email)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSendingOtp(false)
     }
   }
 
@@ -121,12 +150,41 @@ export default function Register() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
-                style={{ paddingLeft: '2.5rem' }}
+                onChange={e => { setEmail(e.target.value); setOtpSent(false); }}
+                style={{ paddingLeft: '2.5rem', paddingRight: '5rem' }}
                 required
               />
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                disabled={sendingOtp || otpSent}
+                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.8rem', cursor: sendingOtp || otpSent ? 'not-allowed' : 'pointer', opacity: sendingOtp || otpSent ? 0.7 : 1 }}
+              >
+                {sendingOtp ? 'Sending...' : otpSent ? 'Sent' : 'Send OTP'}
+              </button>
             </div>
           </div>
+
+          {/* OTP */}
+          {otpSent && (
+            <div className="animate-slide-up">
+              <label className="label">Verification OTP</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem', pointerEvents: 'none' }}>🔑</span>
+                <input
+                  id="reg-otp"
+                  className="input-field"
+                  type="text"
+                  placeholder="6-digit OTP"
+                  value={otp}
+                  onChange={e => setOtp(e.target.value)}
+                  style={{ paddingLeft: '2.5rem' }}
+                  maxLength={6}
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           {/* Password */}
           <div>

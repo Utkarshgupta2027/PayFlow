@@ -129,6 +129,9 @@ export default function Login() {
                 {showPwd ? '🙈' : '👁️'}
               </button>
             </div>
+            <div style={{ textAlign: 'right', marginTop: '0.25rem' }}>
+              <Link to="/forgot-password" style={{ color: 'var(--accent-light)', fontSize: '0.8rem', textDecoration: 'none' }}>Forgot password?</Link>
+            </div>
           </div>
 
           <button id="login-submit" className="btn-primary" type="submit" disabled={loading}>

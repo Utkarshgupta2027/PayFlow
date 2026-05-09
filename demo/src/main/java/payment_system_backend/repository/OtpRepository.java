@@ -6,5 +6,5 @@ import payment_system_backend.model.OtpRecord;
 import java.util.List;
 
 public interface OtpRepository extends JpaRepository<OtpRecord, Long> {
-    List<OtpRecord> findByPhoneNumberOrderByCreatedAtDesc(String phoneNumber);
+    List<OtpRecord> findByIdentifierOrderByCreatedAtDesc(String identifier);
 }
