@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/request',   icon: '🤲', label: 'Request Money' },
   { to: '/qr',        icon: '📷', label: 'QR Scanner' },
   { to: '/split',     icon: '🔀', label: 'Split Payment' },
+  { to: '/scheduled', icon: 'Auto', label: 'Scheduled Payments' },
 ]
 
 export default function Layout() {

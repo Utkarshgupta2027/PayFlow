@@ -14,6 +14,7 @@ import AdminPanel from './pages/AdminPanel.jsx'
 import Notifications from './pages/Notifications.jsx'
 import SplitPayment from './pages/SplitPayment.jsx'
 import RequestMoney from './pages/RequestMoney.jsx'
+import ScheduledPayments from './pages/ScheduledPayments.jsx'
 import Layout from './components/Layout.jsx'
 
 function PrivateRoute({ children }) {
@@ -52,6 +53,7 @@ export default function App() {
               <Route path="qr" element={<QRPage />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="split" element={<SplitPayment />} />
+              <Route path="scheduled" element={<ScheduledPayments />} />
               <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
             </Route>
           </Routes>
