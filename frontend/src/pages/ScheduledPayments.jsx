@@ -37,6 +37,7 @@ export default function ScheduledPayments() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [pinRequired, setPinRequired] = useState(false)
+  const [pinStatusLoaded, setPinStatusLoaded] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
   const [pinError, setPinError] = useState('')
   const [pendingPayload, setPendingPayload] = useState(null)
@@ -56,7 +57,8 @@ export default function ScheduledPayments() {
     apiFetch('/user/pin-status')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setPinRequired(!!d.pinSet) })
-      .catch(() => {})
+      .catch(() => setPinRequired(false))
+      .finally(() => setPinStatusLoaded(true))
   }, [user?.id])
 
   const fetchSchedules = async () => {
@@ -94,19 +96,15 @@ export default function ScheduledPayments() {
       return
     }
 
-    const payload = buildPayload()
-    if (pinRequired) {
-      setPendingPayload(payload)
-      setPinError('')
-      setShowPinModal(true)
-      return
-    }
-    await submitCreate(payload)
+    setPendingPayload(buildPayload())
+    setPinError('')
+    setShowPinModal(true)
   }
 
   const handlePinConfirm = async (pin) => {
     setPinError('')
-    await submitCreate({ ...pendingPayload, transactionPin: pin })
+    const pinField = pinRequired ? 'transactionPin' : 'newTransactionPin'
+    await submitCreate({ ...pendingPayload, [pinField]: pin })
   }
 
   const submitCreate = async (payload) => {
@@ -128,6 +126,8 @@ export default function ScheduledPayments() {
       setForm(f => ({ ...f, receiverId: '', amount: '', description: '' }))
       setShowPinModal(false)
       setPendingPayload(null)
+      setPinRequired(true)
+      setPinStatusLoaded(true)
       setToast({ type: 'success', message: 'Scheduled payment created' })
       fetchSchedules()
     } catch (err) {
@@ -200,6 +200,11 @@ export default function ScheduledPayments() {
         <div className="card">
           <h2 style={{ fontSize: '1.1rem', margin: '0 0 1rem', fontWeight: 700 }}>Create Auto-Pay</h2>
           {error && <div className="alert-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+          {pinStatusLoaded && !pinRequired && (
+            <div className="alert-success" style={{ marginBottom: '1rem' }}>
+              Set a permanent Transaction PIN when you start auto-pay. PayFlow will ask for it whenever you create a new scheduled payment.
+            </div>
+          )}
 
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
@@ -249,8 +254,8 @@ export default function ScheduledPayments() {
               <input className="input-field" value={form.description} maxLength={100} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Apartment rent, premium plan, etc." />
             </div>
 
-            <button className="btn-primary" type="submit" disabled={loading || !form.receiverId || !form.amount || user?.frozen}>
-              {loading ? 'Creating...' : 'Create Scheduled Payment'}
+            <button className="btn-primary" type="submit" disabled={loading || !form.receiverId || !form.amount || user?.frozen || !pinStatusLoaded}>
+              {loading ? 'Creating...' : pinRequired ? 'Enter PIN & Start Auto-Pay' : 'Set PIN & Start Auto-Pay'}
             </button>
           </form>
         </div>
@@ -299,8 +304,10 @@ export default function ScheduledPayments() {
         onCancel={() => { setShowPinModal(false); setPendingPayload(null); setLoading(false) }}
         error={pinError}
         loading={loading}
-        title="Transaction PIN"
-        subtitle={`Authorize auto-pay setup for ${fmtCurrency(pendingPayload?.amount || 0)}`}
+        title={pinRequired ? 'Transaction PIN' : 'Set Transaction PIN'}
+        subtitle={pinRequired
+          ? `Authorize auto-pay setup for ${fmtCurrency(pendingPayload?.amount || 0)}`
+          : 'Choose a 4 digit PIN. This is saved permanently for your account.'}
       />
     </div>
   )

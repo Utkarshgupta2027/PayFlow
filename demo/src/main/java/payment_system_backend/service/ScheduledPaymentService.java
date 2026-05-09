@@ -89,7 +89,7 @@ public class ScheduledPaymentService {
         scheduledPaymentRepository.delete(schedule);
     }
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void runDuePayments() {
         runDuePayments(LocalDate.now());
     }

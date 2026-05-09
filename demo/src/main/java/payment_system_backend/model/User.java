@@ -1,6 +1,7 @@
 package payment_system_backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Entity
@@ -57,6 +58,7 @@ public class User {
     public String getReferredBy() { return referredBy; }
     public String getRole() { return role; }
     public boolean isFrozen() { return frozen; }
+    @JsonIgnore
     public String getTransactionPin() { return transactionPin; }
     public LocalDateTime getLastLoginAt() { return lastLoginAt; }
 

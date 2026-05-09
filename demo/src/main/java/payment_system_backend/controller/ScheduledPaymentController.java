@@ -38,7 +38,7 @@ public class ScheduledPaymentController {
                                     Authentication authentication) {
         try {
             User user = currentUser(authentication);
-            verifyPinIfNeeded(user, request.transactionPin);
+            verifyOrCreatePermanentPin(user, request.transactionPin, request.newTransactionPin);
 
             ScheduledPayment schedule = scheduledPaymentService.create(
                     user.getId(),
@@ -81,8 +81,15 @@ public class ScheduledPaymentController {
         }
     }
 
-    private void verifyPinIfNeeded(User user, String transactionPin) {
-        if (user.getTransactionPin() == null) return;
+    private void verifyOrCreatePermanentPin(User user, String transactionPin, String newTransactionPin) {
+        if (user.getTransactionPin() == null) {
+            if (newTransactionPin == null || !newTransactionPin.matches("\\d{4,6}")) {
+                throw new RuntimeException("Set a 4-6 digit Transaction PIN to start auto-pay.");
+            }
+            user.setTransactionPin(passwordEncoder.encode(newTransactionPin));
+            userRepository.save(user);
+            return;
+        }
         if (transactionPin == null || transactionPin.isBlank()) {
             throw new RuntimeException("Transaction PIN is required.");
         }
@@ -115,5 +122,6 @@ public class ScheduledPaymentController {
         public Integer dayOfWeek;
         public LocalDate startDate;
         public String transactionPin;
+        public String newTransactionPin;
     }
 }

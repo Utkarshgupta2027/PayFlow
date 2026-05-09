@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -113,6 +114,45 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/pin-status")
+    public ResponseEntity<?> pinStatus(Authentication authentication) {
+        try {
+            User user = currentUser(authentication);
+            return ResponseEntity.ok(Map.of("pinSet", user.getTransactionPin() != null));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(401).body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/set-pin")
+    public ResponseEntity<?> setTransactionPin(@RequestBody Map<String, String> body,
+                                               Authentication authentication) {
+        try {
+            User user = currentUser(authentication);
+            String currentPin = body.get("currentPin");
+            String newPin = body.get("newPin");
+
+            if (newPin == null || !newPin.matches("\\d{4,6}")) {
+                throw new RuntimeException("PIN must be 4-6 digits.");
+            }
+
+            if (user.getTransactionPin() != null) {
+                if (currentPin == null || currentPin.isBlank()) {
+                    throw new RuntimeException("Current PIN is required.");
+                }
+                if (!passwordEncoder.matches(currentPin, user.getTransactionPin())) {
+                    throw new RuntimeException("Current PIN is incorrect.");
+                }
+            }
+
+            user.setTransactionPin(passwordEncoder.encode(newPin));
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("message", "Transaction PIN saved successfully", "pinSet", true));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
+
     private boolean passwordMatches(String rawPassword, User user) {
         String stored = user.getPassword();
         if (stored == null) return false;
@@ -170,5 +210,19 @@ public class UserController {
         response.put("refreshToken", refreshToken);
         response.put("user", user);
         return response;
+    }
+
+    private User currentUser(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new RuntimeException("Authentication required");
+        }
+        User user = userRepository.findByEmail(authentication.getName());
+        if (user == null) {
+            user = userRepository.findByPhoneNumber(authentication.getName());
+        }
+        if (user == null) {
+            throw new RuntimeException("Authenticated user not found");
+        }
+        return user;
     }
 }
