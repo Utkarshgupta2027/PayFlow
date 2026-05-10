@@ -44,7 +44,7 @@ public class TransactionController {
     @PostMapping("/send")
     public ResponseEntity<Map<String, Object>> sendMoney(
             @RequestParam("senderId") Long senderId,
-            @RequestParam("receiverId") Long receiverId,
+            @RequestParam("receiverId") String receiverInput,
             @RequestParam("amount") double amount,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "transactionPin", required = false) String transactionPin,
@@ -63,7 +63,29 @@ public class TransactionController {
                             Map.of("error", "Incorrect Transaction PIN."));
                 }
             }
-            Transaction tx = transactionService.sendMoney(sender.getId(), receiverId, amount, description);
+            
+            // Resolve receiver from input (ID, Email, or Phone)
+            User receiver = null;
+            if (receiverInput.contains("@")) {
+                receiver = userRepository.findByEmail(receiverInput);
+            } else {
+                try {
+                    Long rId = Long.parseLong(receiverInput);
+                    receiver = userRepository.findById(rId).orElse(null);
+                    if (receiver == null) {
+                        receiver = userRepository.findByPhoneNumber(receiverInput);
+                    }
+                } catch (NumberFormatException e) {
+                    receiver = userRepository.findByPhoneNumber(receiverInput);
+                }
+            }
+            
+            if (receiver == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Receiver not found with provided identifier."));
+            }
+            Long actualReceiverId = receiver.getId();
+
+            Transaction tx = transactionService.sendMoney(sender.getId(), actualReceiverId, amount, description);
 
             int pointsAwarded = rewardService.awardTransactionPoints(sender.getId(), amount);
 

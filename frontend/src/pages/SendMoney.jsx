@@ -242,8 +242,8 @@ export default function SendMoney() {
             <input
               id="send-receiver-id"
               className="input-field"
-              type="number"
-              placeholder="Enter recipient's User ID"
+              type="text"
+              placeholder="Enter recipient's User ID, Email, or Phone"
               value={form.receiverId}
               onChange={e => { setForm(f => ({ ...f, receiverId: e.target.value })); setQrPrefilled(false); setReceiverInfo(null) }}
               required

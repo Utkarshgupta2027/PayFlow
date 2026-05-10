@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import API_BASE, { apiFetch } from '../api.js'
+import { generateReceipt } from '../utils/generateReceipt.js'
 
 function fmtCurrency(n) {
   return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -305,8 +306,19 @@ export default function Dashboard() {
                     {fmtDate(t.time)}
                   </div>
                 </div>
-                <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: isSent ? '#f87171' : '#34d399' }}>
-                  {isSent ? '-' : '+'}{fmtCurrency(t.amount)}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: isSent ? '#f87171' : '#34d399' }}>
+                    {isSent ? '-' : '+'}{fmtCurrency(t.amount)}
+                  </div>
+                  <button 
+                    onClick={() => generateReceipt(t, user)}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', padding: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem', transition: 'opacity 0.2s' }}
+                    onMouseOver={e => e.currentTarget.style.opacity = '0.7'}
+                    onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                    title="Download Receipt"
+                  >
+                    📥 Receipt
+                  </button>
                 </div>
               </div>
             )
