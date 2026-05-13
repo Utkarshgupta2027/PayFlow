@@ -53,11 +53,16 @@ public class JwtFilter extends OncePerRequestFilter {
                 }
 
                 if (user != null) {
-                    String role = user.getRole() != null ? user.getRole() : "USER";
+                    String role = user.getRole() != null ? user.getRole().trim().toUpperCase() : "USER";
+                    if (role.startsWith("ROLE_")) {
+                        role = role.substring("ROLE_".length());
+                    }
                     var auth = new UsernamePasswordAuthenticationToken(
                             subject,
                             null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                            List.of(
+                                    new SimpleGrantedAuthority("ROLE_" + role),
+                                    new SimpleGrantedAuthority(role)));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }

@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import payment_system_backend.dto.AddMoneyRequest;
 import payment_system_backend.dto.CreatePaymentOrderRequest;
 import payment_system_backend.dto.VerifyPaymentRequest;
+import payment_system_backend.dto.WithdrawMoneyRequest;
+import payment_system_backend.model.Transaction;
 import payment_system_backend.model.User;
 import payment_system_backend.repository.UserRepository;
 import payment_system_backend.service.PaymentGatewayService;
@@ -63,6 +65,27 @@ public class WalletController {
                     request.getRazorpayPaymentId(),
                     request.getRazorpaySignature());
             return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/withdraw")
+    public ResponseEntity<?> withdrawToBank(@RequestBody WithdrawMoneyRequest request,
+                                            Authentication authentication) {
+        try {
+            User user = currentUser(authentication);
+            Transaction tx = walletService.withdrawToBank(
+                    user.getId(),
+                    request.getAmount(),
+                    request.getBankAccountId(),
+                    request.getDescription());
+            User updated = userRepository.findById(user.getId()).orElse(user);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Withdrawal initiated successfully",
+                    "transaction", tx,
+                    "user", updated));
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }

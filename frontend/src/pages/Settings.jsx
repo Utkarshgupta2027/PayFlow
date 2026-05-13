@@ -14,14 +14,14 @@ const THEME_CONFIG = {
 }
 
 const BANKS = [
-  'State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank',
+  'State Bank of India', 'Indian Band','HDFC Bank', 'ICICI Bank', 'Axis Bank',
   'Kotak Mahindra Bank', 'Punjab National Bank', 'Bank of Baroda',
   'Canara Bank', 'Union Bank of India', 'IndusInd Bank',
   'Yes Bank', 'IDFC First Bank', 'Federal Bank', 'South Indian Bank',
   'Other'
 ]
 
-const emptyForm = { accountHolderName: '', accountNumber: '', ifscCode: '', bankName: '', accountType: 'SAVINGS' }
+const emptyForm = { accountHolderName: '', accountNumber: '', confirmAccountNumber: '', ifscCode: '', bankName: '', accountType: 'SAVINGS' }
 
 export default function Settings() {
   const { user, logout } = useAuth()
@@ -104,16 +104,27 @@ export default function Settings() {
   const handleAddBank = async (e) => {
     e.preventDefault()
     setBankError('')
+    if (bankForm.accountNumber !== bankForm.confirmAccountNumber) {
+      setBankError('Account numbers do not match.')
+      return
+    }
     setAddingBank(true)
     try {
       const res = await apiFetch('/bank/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...bankForm, userId: user.id }),
+        body: JSON.stringify({
+          accountHolderName: bankForm.accountHolderName,
+          accountNumber: bankForm.accountNumber,
+          ifscCode: bankForm.ifscCode,
+          bankName: bankForm.bankName,
+          accountType: bankForm.accountType,
+          userId: user.id
+        }),
       })
-      const d = await res.json()
+      const d = await res.json().catch(() => ({}))
       if (!res.ok || d.success === false) {
-        setBankError(typeof d === 'string' ? d : d.message || 'Failed to add account')
+        setBankError(d.message || d.error || 'Failed to add account')
         return
       }
       setToast({ type: 'success', icon: '🏦', message: 'Bank account added successfully!', duration: 3000 })
@@ -353,7 +364,10 @@ export default function Settings() {
                   <input
                     className="input-field"
                     placeholder="Re-enter account number"
+                    value={bankForm.confirmAccountNumber}
+                    onChange={e => setBankForm(f => ({ ...f, confirmAccountNumber: e.target.value.replace(/\D/g, '') }))}
                     onPaste={e => e.preventDefault()}
+                    maxLength={18}
                     required
                   />
                 </div>
@@ -572,7 +586,7 @@ export default function Settings() {
         <div className="settings-section-header">💼 Account Details</div>
         {[
           { label: 'Account Type', value: 'Standard' },
-          { label: 'Member Since', value: '2024' },
+          { label: 'Member Since', value: '2026' },
           { label: 'Wallet Balance', value: `₹${Number(user?.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` },
           { label: 'Referral Code', value: user?.referralCode || '—' },
         ].map(({ label, value }) => (

@@ -13,6 +13,8 @@ export default function AdminPanel() {
   const [users, setUsers] = useState([])
   const [refunds, setRefunds] = useState([])
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [actionMsg, setActionMsg] = useState(null)
 
   // Redirect non-admins
@@ -25,32 +27,60 @@ export default function AdminPanel() {
     setTimeout(() => setActionMsg(null), 3000)
   }
 
+  const parseAdminResponse = async (res, fallback) => {
+    const text = await res.text().catch(() => '')
+    let data = {}
+    if (text) {
+      try {
+        data = JSON.parse(text)
+      } catch {
+        data = { error: text }
+      }
+    }
+    if (!res.ok) {
+      throw new Error(data.error || data.message || `${fallback} failed with status ${res.status}`)
+    }
+    return data
+  }
+
   const loadStats = useCallback(async () => {
     const res = await apiFetch('/admin/stats')
-    if (res.ok) setStats(await res.json())
+    setStats(await parseAdminResponse(res, 'Loading overview'))
   }, [])
 
   const loadUsers = useCallback(async () => {
     const res = await apiFetch('/admin/users')
-    if (res.ok) setUsers(await res.json())
+    const data = await parseAdminResponse(res, 'Loading users')
+    setUsers(Array.isArray(data) ? data : [])
   }, [])
 
   const loadRefunds = useCallback(async () => {
     const res = await apiFetch('/admin/refunds')
-    if (res.ok) setRefunds(await res.json())
+    const data = await parseAdminResponse(res, 'Loading refunds')
+    setRefunds(Array.isArray(data) ? data : [])
   }, [])
+
+  const loadAdminData = useCallback(async () => {
+    setInitialLoading(true)
+    setLoadError('')
+    try {
+      await Promise.all([loadStats(), loadUsers(), loadRefunds()])
+    } catch (err) {
+      setLoadError(err.message || 'Unable to load admin data')
+    } finally {
+      setInitialLoading(false)
+    }
+  }, [loadStats, loadUsers, loadRefunds])
 
   useEffect(() => {
     if (!isAdmin) return
-    loadStats()
-    loadUsers()
-    loadRefunds()
-  }, [isAdmin, loadStats, loadUsers, loadRefunds])
+    loadAdminData()
+  }, [isAdmin, loadAdminData])
 
   const blockUser = async (id) => {
     setLoading(true)
     const res = await apiFetch(`/admin/users/${id}/block`, { method: 'POST' })
-    if (res.ok) { showMsg('User blocked'); loadUsers() }
+    if (res.ok) { showMsg('User blocked'); loadAdminData() }
     else showMsg('Failed to block', 'error')
     setLoading(false)
   }
@@ -58,7 +88,7 @@ export default function AdminPanel() {
   const unblockUser = async (id) => {
     setLoading(true)
     const res = await apiFetch(`/admin/users/${id}/unblock`, { method: 'POST' })
-    if (res.ok) { showMsg('User unblocked'); loadUsers() }
+    if (res.ok) { showMsg('User unblocked'); loadAdminData() }
     else showMsg('Failed to unblock', 'error')
     setLoading(false)
   }
@@ -66,7 +96,7 @@ export default function AdminPanel() {
   const handleRefund = async (txId, action) => {
     setLoading(true)
     const res = await apiFetch(`/admin/refunds/${txId}/${action}`, { method: 'POST' })
-    if (res.ok) { showMsg(`Refund ${action}d`); loadRefunds(); loadStats() }
+    if (res.ok) { showMsg(`Refund ${action}d`); loadAdminData() }
     else showMsg('Action failed', 'error')
     setLoading(false)
   }
@@ -101,6 +131,25 @@ export default function AdminPanel() {
         </div>
       )}
 
+      {loadError && (
+        <div className="alert-error" style={{ marginBottom: '1rem' }}>
+          {loadError}
+          <button
+            onClick={loadAdminData}
+            className="btn-secondary"
+            style={{ marginLeft: '1rem', width: 'auto', padding: '0.35rem 0.75rem' }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {initialLoading && (
+        <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          Loading admin data...
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="admin-tabs">
         {TABS.map(tab => (
@@ -122,6 +171,11 @@ export default function AdminPanel() {
               </div>
             ))}
           </div>
+          {!initialLoading && !loadError && !stats && (
+            <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-faint)' }}>
+              No overview data available.
+            </div>
+          )}
           {stats?.pendingRefunds > 0 && (
             <div className="risk-medium risk-indicator" style={{ marginBottom: '1rem' }}>
               ⚠️ {stats.pendingRefunds} refund(s) are pending your approval. Go to the Refunds tab.
@@ -142,6 +196,11 @@ export default function AdminPanel() {
             All Users ({users.length})
           </div>
           <div style={{ overflowX: 'auto' }}>
+            {!initialLoading && !loadError && users.length === 0 ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-faint)' }}>
+                No users found.
+              </div>
+            ) : (
             <table className="admin-table">
               <thead>
                 <tr>
@@ -184,6 +243,7 @@ export default function AdminPanel() {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
       )}

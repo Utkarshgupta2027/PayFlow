@@ -25,6 +25,13 @@ export default function Dashboard() {
   const [addAmount, setAddAmount] = useState('')
   const [addLoading, setAddLoading] = useState(false)
   const [addSuccess, setAddSuccess] = useState(false)
+  const [showWithdraw, setShowWithdraw] = useState(false)
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [withdrawAccountId, setWithdrawAccountId] = useState('')
+  const [withdrawNote, setWithdrawNote] = useState('')
+  const [withdrawLoading, setWithdrawLoading] = useState(false)
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false)
+  const [bankAccounts, setBankAccounts] = useState([])
 
   const PRESETS = [500, 1000, 2000, 5000]
 
@@ -58,6 +65,19 @@ export default function Dashboard() {
       .catch(() => setTransactions([]))
       .finally(() => setLoading(false))
   }, [refreshBalance])
+
+  useEffect(() => {
+    if (!user?.id) return
+    apiFetch(`/bank/accounts/${user.id}`)
+      .then(r => r.json())
+      .then(data => {
+        const accounts = Array.isArray(data) ? data : []
+        setBankAccounts(accounts)
+        const primary = accounts.find(a => a.primary) || accounts[0]
+        if (primary) setWithdrawAccountId(String(primary.id))
+      })
+      .catch(() => setBankAccounts([]))
+  }, [user?.id, refreshBalance])
 
   // Daily bonus auto-check
   useEffect(() => {
@@ -183,6 +203,55 @@ export default function Dashboard() {
     setAddAmount('')
   }
 
+  const closeWithdrawModal = () => {
+    if (withdrawLoading || withdrawSuccess) return
+    setShowWithdraw(false)
+    setWithdrawAmount('')
+    setWithdrawNote('')
+  }
+
+  const handleWithdraw = async () => {
+    const amt = parseFloat(withdrawAmount)
+    if (!amt || amt <= 0) return
+    if (amt > Number(user?.balance || 0)) {
+      setToast({ type: 'error', message: 'Insufficient wallet balance.', duration: 3000 })
+      return
+    }
+    if (!withdrawAccountId) {
+      setToast({ type: 'error', message: 'Select a bank account first.', duration: 3000 })
+      return
+    }
+
+    setWithdrawLoading(true)
+    try {
+      const res = await apiFetch('/wallet/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amt,
+          bankAccountId: Number(withdrawAccountId),
+          description: withdrawNote
+        })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Withdrawal failed')
+      if (data.user) updateUser(data.user)
+      setWithdrawSuccess(true)
+      setTimeout(() => {
+        setWithdrawSuccess(false)
+        setShowWithdraw(false)
+        setWithdrawAmount('')
+        setWithdrawNote('')
+        setRefreshBalance(r => r + 1)
+        setToast({ type: 'success', message: `${fmtCurrency(amt)} withdrawal initiated!`, duration: 3500 })
+      }, 1400)
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to withdraw money. Try again.', duration: 3000 })
+    } finally {
+      setWithdrawLoading(false)
+    }
+  }
+
   const sent = transactions.filter(t => t.senderId === user?.id)
   const received = transactions.filter(t => t.receiverId === user?.id)
   const totalSent = sent.reduce((s, t) => s + t.amount, 0)
@@ -238,6 +307,26 @@ export default function Dashboard() {
           >
             ＋ Add Money
           </button>
+          <button
+            onClick={() => setShowWithdraw(true)}
+            style={{
+              background: 'rgba(255,255,255,0.12)',
+              border: '1.5px solid rgba(255,255,255,0.3)',
+              borderRadius: '0.75rem',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              padding: '0.5rem 1.25rem',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(8px)'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.22)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+          >
+            Withdraw
+          </button>
         </div>
       </div>
 
@@ -245,6 +334,7 @@ export default function Dashboard() {
       <div className="quick-actions-container" style={{ marginBottom: '1.75rem' }}>
         {[
           { icon: '➕', label: 'Add Money', action: () => setShowAddMoney(true) },
+          { icon: '->', label: 'Withdraw', action: () => setShowWithdraw(true) },
           { icon: '💸', label: 'Send', path: '/send' },
           { icon: '📷', label: 'Scan QR', path: '/qr' },
           { icon: '📊', label: 'Analytics', path: '/analytics' },
@@ -293,6 +383,7 @@ export default function Dashboard() {
         ) : (
           transactions.map(t => {
             const isSent = t.senderId === user?.id
+            const isWithdrawal = t.category === 'WITHDRAWAL'
             return (
               <div key={t.id} className="tx-item">
                 <div className={`tx-icon ${isSent ? 'tx-sent' : 'tx-received'}`}>
@@ -300,10 +391,10 @@ export default function Dashboard() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {isSent ? `Sent to #${t.receiverId}` : `Received from #${t.senderId}`}
+                    {isWithdrawal ? 'Bank withdrawal' : isSent ? `Sent to #${t.receiverId}` : `Received from #${t.senderId}`}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)' }}>
-                    {fmtDate(t.time)}
+                    {isWithdrawal && t.description ? t.description : fmtDate(t.time)}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
@@ -504,6 +595,184 @@ export default function Dashboard() {
                     }
                   </button>
                 </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showWithdraw && (
+        <div
+          onClick={closeWithdrawModal}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.72)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+        >
+          <div
+            className="add-money-modal"
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '1.5rem',
+              padding: '2rem',
+              width: '100%', maxWidth: '440px',
+              boxShadow: '0 32px 72px rgba(0,0,0,0.55)',
+              animation: 'slideUp 0.25s ease-out',
+              position: 'relative'
+            }}
+          >
+            <button
+              onClick={closeWithdrawModal}
+              style={{
+                position: 'absolute', top: '1rem', right: '1rem',
+                background: 'var(--bg-input)', border: '1px solid var(--border-color)',
+                borderRadius: '50%', width: '2rem', height: '2rem',
+                cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.1rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >x</button>
+
+            {withdrawSuccess ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                <div style={{
+                  width: '5rem', height: '5rem', borderRadius: '50%',
+                  background: 'rgba(16,185,129,0.15)',
+                  border: '2.5px solid #10b981',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '2.25rem', margin: '0 auto 1.25rem'
+                }}>✓</div>
+                <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: '#34d399', margin: '0 0 0.5rem' }}>
+                  Withdrawal Initiated
+                </h2>
+                <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>
+                  {fmtCurrency(parseFloat(withdrawAmount))} is moving to your bank account
+                </p>
+              </div>
+            ) : (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+                  <div style={{
+                    width: '3.75rem', height: '3.75rem', borderRadius: '1.125rem',
+                    background: 'linear-gradient(135deg, #059669, #0ea5e9)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '1.875rem', margin: '0 auto 1rem',
+                    boxShadow: '0 8px 28px rgba(14,165,233,0.25)'
+                  }}>→</div>
+                  <h2 style={{ fontSize: '1.375rem', fontWeight: 800, margin: '0 0 0.25rem' }}>Withdraw to Bank</h2>
+                  <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.875rem' }}>
+                    Transfer wallet balance back to a linked account
+                  </p>
+                </div>
+
+                <div style={{
+                  background: 'var(--accent-glow)',
+                  border: '1px solid rgba(14,165,233,0.2)',
+                  borderRadius: '0.875rem',
+                  padding: '0.75rem 1rem',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  marginBottom: '1.25rem'
+                }}>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Available Balance</span>
+                  <span style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--accent-light)' }}>
+                    {fmtCurrency(user?.balance || 0)}
+                  </span>
+                </div>
+
+                {bankAccounts.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <p style={{ color: 'var(--text-muted)', marginTop: 0 }}>
+                      Add a bank account in Settings before withdrawing.
+                    </p>
+                    <button className="btn-primary" onClick={() => navigate('/settings')}>
+                      Go to Settings
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label className="label">Destination account</label>
+                      <select
+                        className="input-field"
+                        value={withdrawAccountId}
+                        onChange={e => setWithdrawAccountId(e.target.value)}
+                      >
+                        {bankAccounts.map(acc => (
+                          <option key={acc.id} value={acc.id}>
+                            {acc.bankName} - {acc.accountNumber}{acc.primary ? ' (Primary)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label className="label">Amount</label>
+                      <div style={{ position: 'relative' }}>
+                        <span style={{
+                          position: 'absolute', left: '1rem', top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: 'var(--text-muted)', fontWeight: 700, fontSize: '1.125rem',
+                          pointerEvents: 'none'
+                        }}>₹</span>
+                        <input
+                          className="input-field"
+                          type="number"
+                          min="1"
+                          max={user?.balance || 0}
+                          placeholder="0"
+                          value={withdrawAmount}
+                          onChange={e => setWithdrawAmount(e.target.value)}
+                          autoFocus
+                          style={{ paddingLeft: '2.25rem', fontSize: '1.25rem', fontWeight: 800 }}
+                        />
+                      </div>
+                      {withdrawAmount && parseFloat(withdrawAmount) > 0 && (
+                        <div style={{
+                          fontSize: '0.8rem', color: 'var(--text-muted)',
+                          marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem'
+                        }}>
+                          Balance after withdrawal:
+                          <span style={{ color: '#34d399', fontWeight: 700 }}>
+                            {fmtCurrency(Math.max(0, (user?.balance || 0) - parseFloat(withdrawAmount)))}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label className="label">Note (optional)</label>
+                      <input
+                        className="input-field"
+                        placeholder="e.g. Move to savings"
+                        value={withdrawNote}
+                        onChange={e => setWithdrawNote(e.target.value)}
+                        maxLength={80}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <button className="btn-secondary" onClick={closeWithdrawModal} style={{ flex: 1 }}>
+                        Cancel
+                      </button>
+                      <button
+                        className="btn-primary"
+                        onClick={handleWithdraw}
+                        disabled={withdrawLoading || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > Number(user?.balance || 0)}
+                        style={{ flex: 2, fontSize: '1rem', padding: '0.875rem' }}
+                      >
+                        {withdrawLoading
+                          ? <><span className="animate-spin">⟳</span> Processing...</>
+                          : <>Withdraw {withdrawAmount && parseFloat(withdrawAmount) > 0 ? fmtCurrency(parseFloat(withdrawAmount)) : 'Money'}</>
+                        }
+                      </button>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
