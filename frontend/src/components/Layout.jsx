@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/referral',  icon: '🔗', label: 'Refer & Earn' },
   { to: '/send',      icon: '💸', label: 'Send Money' },
   { to: '/request',   icon: '🤲', label: 'Request Money' },
+  { to: '/check-balance', icon: 'Rs', label: 'Check Balance' },
   { to: '/qr',        icon: '📷', label: 'QR Scanner' },
   { to: '/split',     icon: '🔀', label: 'Split Payment' },
   { to: '/scheduled', icon: 'Auto', label: 'Scheduled Payments' },

@@ -14,7 +14,7 @@ const THEME_CONFIG = {
 }
 
 const BANKS = [
-  'State Bank of India', 'Indian Band','HDFC Bank', 'ICICI Bank', 'Axis Bank',
+  'State Bank of India', 'Indian Bank','HDFC Bank', 'ICICI Bank', 'Axis Bank',
   'Kotak Mahindra Bank', 'Punjab National Bank', 'Bank of Baroda',
   'Canara Bank', 'Union Bank of India', 'IndusInd Bank',
   'Yes Bank', 'IDFC First Bank', 'Federal Bank', 'South Indian Bank',
@@ -587,7 +587,7 @@ export default function Settings() {
         {[
           { label: 'Account Type', value: 'Standard' },
           { label: 'Member Since', value: '2026' },
-          { label: 'Wallet Balance', value: `₹${Number(user?.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` },
+          
           { label: 'Referral Code', value: user?.referralCode || '—' },
         ].map(({ label, value }) => (
           <div key={label} className="settings-item">

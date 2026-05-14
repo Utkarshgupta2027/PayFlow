@@ -17,6 +17,7 @@ import SplitPayment from './pages/SplitPayment.jsx'
 import RequestMoney from './pages/RequestMoney.jsx'
 import ScheduledPayments from './pages/ScheduledPayments.jsx'
 import Feedback from './pages/Feedback.jsx'
+import CheckBalance from './pages/CheckBalance.jsx'
 import Layout from './components/Layout.jsx'
 
 function PrivateRoute({ children }) {
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="send" element={<SendMoney />} />
               <Route path="request" element={<RequestMoney />} />
+              <Route path="check-balance" element={<CheckBalance />} />
               <Route path="qr" element={<QRPage />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="split" element={<SplitPayment />} />

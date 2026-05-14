@@ -12,6 +12,8 @@ function fmtDate(s) {
   return new Date(s).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+const HIDDEN_BALANCE = 'Protected'
+
 export default function Dashboard() {
   const { user, updateUser } = useAuth()
   const navigate = useNavigate()
@@ -23,6 +25,8 @@ export default function Dashboard() {
   // Add Money modal state
   const [showAddMoney, setShowAddMoney] = useState(false)
   const [addAmount, setAddAmount] = useState('')
+  const [addPin, setAddPin] = useState('')
+  const [addPinError, setAddPinError] = useState('')
   const [addLoading, setAddLoading] = useState(false)
   const [addSuccess, setAddSuccess] = useState(false)
   const [showWithdraw, setShowWithdraw] = useState(false)
@@ -99,26 +103,33 @@ export default function Dashboard() {
   const handleAddMoney = async () => {
     const amt = parseFloat(addAmount)
     if (!amt || amt <= 0) return
+    if (!/^\d{4,6}$/.test(addPin)) {
+      setAddPinError('Enter your 4-6 digit Transaction PIN.')
+      return
+    }
     setAddLoading(true)
+    setAddPinError('')
     try {
       const res = await apiFetch('/wallet/addMoney', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, amount: amt })
+        body: JSON.stringify({ userId: user.id, amount: amt, transactionPin: addPin })
       })
-      if (!res.ok) throw new Error('Failed')
-      const updated = await res.json()
-      updateUser(updated)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      updateUser(data)
       setAddSuccess(true)
       setTimeout(() => {
         setAddSuccess(false)
         setShowAddMoney(false)
         setAddAmount('')
+        setAddPin('')
         setRefreshBalance(r => r + 1)
         setToast({ type: 'success', icon: '💰', message: `${fmtCurrency(amt)} added to your wallet!`, duration: 3500 })
       }, 1600)
-    } catch {
-      setToast({ type: 'error', icon: '❌', message: 'Failed to add money. Try again.', duration: 3000 })
+    } catch (err) {
+      setAddPinError(err.message || 'Failed to add money. Try again.')
+      setToast({ type: 'error', icon: '❌', message: err.message || 'Failed to add money. Try again.', duration: 3000 })
     } finally {
       setAddLoading(false)
     }
@@ -201,6 +212,8 @@ export default function Dashboard() {
     if (addLoading || addSuccess) return
     setShowAddMoney(false)
     setAddAmount('')
+    setAddPin('')
+    setAddPinError('')
   }
 
   const closeWithdrawModal = () => {
@@ -270,12 +283,12 @@ export default function Dashboard() {
 
       {/* Balance Card */}
       <div className="balance-card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '0.5rem' }}>Total Balance</div>
+        <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '0.5rem' }}>Wallet Balance</div>
         <div className="amount" style={{ fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '1rem' }}>
-          {fmtCurrency(user?.balance || 0)}
+          {HIDDEN_BALANCE}
         </div>
         <div style={{ fontSize: '0.8rem', opacity: 0.75, marginBottom: '1rem' }}>
-          Account: {user?.email}
+          Enter your PIN on the Check Balance page to view this amount.
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <div>
@@ -287,7 +300,7 @@ export default function Dashboard() {
             <div style={{ fontWeight: 700, fontSize: '1.0625rem' }}>{fmtCurrency(totalReceived)}</div>
           </div>
           <button
-            onClick={() => setShowAddMoney(true)}
+            onClick={() => navigate('/check-balance')}
             style={{
               marginLeft: 'auto',
               background: 'rgba(255,255,255,0.18)',
@@ -305,7 +318,27 @@ export default function Dashboard() {
             onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.28)'}
             onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.18)'}
           >
-            ＋ Add Money
+            Check Balance
+          </button>
+          <button
+            onClick={() => setShowAddMoney(true)}
+            style={{
+              background: 'rgba(255,255,255,0.18)',
+              border: '1.5px solid rgba(255,255,255,0.35)',
+              borderRadius: '0.75rem',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              padding: '0.5rem 1.25rem',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(8px)'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.28)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.18)'}
+          >
+            Add Money
           </button>
           <button
             onClick={() => setShowWithdraw(true)}
@@ -335,6 +368,7 @@ export default function Dashboard() {
         {[
           { icon: '➕', label: 'Add Money', action: () => setShowAddMoney(true) },
           { icon: '->', label: 'Withdraw', action: () => setShowWithdraw(true) },
+          { icon: 'Rs', label: 'Check Balance', path: '/check-balance' },
           { icon: '💸', label: 'Send', path: '/send' },
           { icon: '📷', label: 'Scan QR', path: '/qr' },
           { icon: '📊', label: 'Analytics', path: '/analytics' },
@@ -503,7 +537,7 @@ export default function Dashboard() {
                 }}>
                   <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Current Balance</span>
                   <span style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--accent-light)' }}>
-                    {fmtCurrency(user?.balance || 0)}
+                    {HIDDEN_BALANCE}
                   </span>
                 </div>
 
@@ -566,10 +600,30 @@ export default function Dashboard() {
                       fontSize: '0.8rem', color: 'var(--text-muted)',
                       marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem'
                     }}>
-                      New balance:
-                      <span style={{ color: '#34d399', fontWeight: 700 }}>
-                        {fmtCurrency((user?.balance || 0) + parseFloat(addAmount))}
-                      </span>
+                      Balance preview is hidden on Dashboard.
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label className="label">Transaction PIN</label>
+                  <input
+                    className="input-field"
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="Enter 4-6 digit PIN"
+                    value={addPin}
+                    maxLength={6}
+                    onChange={e => {
+                      setAddPin(e.target.value.replace(/\D/g, '').slice(0, 6))
+                      setAddPinError('')
+                    }}
+                    style={{ fontSize: '1.125rem', fontWeight: 700, letterSpacing: '0.2em' }}
+                  />
+                  {addPinError && (
+                    <div className="alert-error animate-slide-up" style={{ marginTop: '0.75rem' }}>
+                      {addPinError}
                     </div>
                   )}
                 </div>
@@ -586,7 +640,7 @@ export default function Dashboard() {
                   <button
                     className="btn-primary"
                     onClick={handleAddMoney}
-                    disabled={addLoading || !addAmount || parseFloat(addAmount) <= 0}
+                    disabled={addLoading || !addAmount || parseFloat(addAmount) <= 0 || addPin.length < 4}
                     style={{ flex: 2, fontSize: '1rem', padding: '0.875rem' }}
                   >
                     {addLoading
@@ -680,7 +734,7 @@ export default function Dashboard() {
                 }}>
                   <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Available Balance</span>
                   <span style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--accent-light)' }}>
-                    {fmtCurrency(user?.balance || 0)}
+                    {HIDDEN_BALANCE}
                   </span>
                 </div>
 
@@ -736,10 +790,7 @@ export default function Dashboard() {
                           fontSize: '0.8rem', color: 'var(--text-muted)',
                           marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem'
                         }}>
-                          Balance after withdrawal:
-                          <span style={{ color: '#34d399', fontWeight: 700 }}>
-                            {fmtCurrency(Math.max(0, (user?.balance || 0) - parseFloat(withdrawAmount)))}
-                          </span>
+                          Balance preview is hidden on Dashboard.
                         </div>
                       )}
                     </div>

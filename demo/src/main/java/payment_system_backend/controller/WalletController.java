@@ -3,6 +3,7 @@ package payment_system_backend.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import payment_system_backend.dto.AddMoneyRequest;
 import payment_system_backend.dto.CreatePaymentOrderRequest;
@@ -33,14 +34,24 @@ public class WalletController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     /**
      * Legacy direct credit endpoint kept blocked for real-money safety.
      * Use /wallet/payment/order and /wallet/payment/verify instead.
      */
     @PostMapping("/addMoney")
-    public ResponseEntity<?> addMoney(@RequestBody AddMoneyRequest request){
-        User updatedUser = walletService.addMoney(request.getUserId(), request.getAmount());
-        return ResponseEntity.ok(updatedUser);
+    public ResponseEntity<?> addMoney(@RequestBody AddMoneyRequest request,
+                                      Authentication authentication){
+        try {
+            User user = currentUser(authentication);
+            verifyTransactionPin(user, request.getTransactionPin());
+            User updatedUser = walletService.addMoney(user.getId(), request.getAmount());
+            return ResponseEntity.ok(updatedUser);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(403).body(Map.of("error", ex.getMessage()));
+        }
     }
 
     @PostMapping("/payment/order")
@@ -114,5 +125,17 @@ public class WalletController {
             throw new RuntimeException("Authenticated user not found");
         }
         return user;
+    }
+
+    private void verifyTransactionPin(User user, String transactionPin) {
+        if (user.getTransactionPin() == null) {
+            throw new RuntimeException("Set a Transaction PIN before adding money.");
+        }
+        if (transactionPin == null || transactionPin.isBlank()) {
+            throw new RuntimeException("Transaction PIN is required.");
+        }
+        if (!passwordEncoder.matches(transactionPin, user.getTransactionPin())) {
+            throw new RuntimeException("Incorrect Transaction PIN.");
+        }
     }
 }

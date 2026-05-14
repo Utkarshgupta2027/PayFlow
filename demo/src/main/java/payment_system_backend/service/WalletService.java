@@ -28,6 +28,9 @@ public class WalletService {
     private NotificationService notificationService;
 
     public User addMoney(Long userId, double amount){
+        if (amount <= 0) {
+            throw new RuntimeException("Amount must be greater than zero");
+        }
 
         User user = userRepository.findById(userId).orElseThrow();
 

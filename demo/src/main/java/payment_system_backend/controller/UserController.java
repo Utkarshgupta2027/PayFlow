@@ -169,6 +169,29 @@ public class UserController {
         }
     }
 
+    @PostMapping("/check-balance")
+    public ResponseEntity<?> checkBalance(@RequestBody Map<String, String> body,
+                                          Authentication authentication) {
+        try {
+            User user = currentUser(authentication);
+            String transactionPin = body.get("transactionPin");
+
+            if (user.getTransactionPin() == null) {
+                return ResponseEntity.status(403).body(Map.of("error", "Set a Transaction PIN before checking balance."));
+            }
+            if (transactionPin == null || transactionPin.isBlank()) {
+                return ResponseEntity.status(403).body(Map.of("error", "Transaction PIN is required."));
+            }
+            if (!passwordEncoder.matches(transactionPin, user.getTransactionPin())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Incorrect Transaction PIN."));
+            }
+
+            return ResponseEntity.ok(Map.of("balance", user.getBalance()));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(401).body(Map.of("error", ex.getMessage()));
+        }
+    }
+
     @PostMapping("/forgot-password/send-otp")
     public ResponseEntity<?> sendForgotPasswordOtp(@RequestBody Map<String, String> body) {
         String email = body.get("email");
