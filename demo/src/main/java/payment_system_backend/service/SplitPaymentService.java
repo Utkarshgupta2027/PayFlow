@@ -47,6 +47,7 @@ public class SplitPaymentService {
             p.setSplitPayment(split);
             p.setUserId(uid);
             p.setUserName(u != null ? u.getName() : "Unknown");
+            p.setProfilePictureUrl(u != null ? u.getProfilePictureUrl() : null);
             p.setAmountOwed(Math.round(share * 100.0) / 100.0);
             split.getParticipants().add(p);
 

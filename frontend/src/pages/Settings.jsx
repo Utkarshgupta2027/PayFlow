@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext.jsx'
 import { useNavigate } from 'react-router-dom'
 import { useOutletContext } from 'react-router-dom'
 import API_BASE, { apiFetch } from '../api.js'
+import UserAvatar from '../components/UserAvatar.jsx'
 
 const THEME_CONFIG = {
   dark: { label: 'Dark', icon: '🌙', swatch: '#0ea5e9', bg: '#020617' },
@@ -24,7 +25,7 @@ const BANKS = [
 const emptyForm = { accountHolderName: '', accountNumber: '', confirmAccountNumber: '', ifscCode: '', bankName: '', accountType: 'SAVINGS' }
 
 export default function Settings() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const { theme, changeTheme } = useTheme()
   const navigate = useNavigate()
   const { setToast } = useOutletContext()
@@ -46,6 +47,13 @@ export default function Settings() {
   const [pinError, setPinError] = useState('')
   const [pinSuccess, setPinSuccess] = useState('')
 
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [contacts, setContacts] = useState([])
+  const [contactsLoading, setContactsLoading] = useState(true)
+  const [contactForm, setContactForm] = useState({ recipientIdentifier: '', nickname: '' })
+  const [contactError, setContactError] = useState('')
+  const [savingContact, setSavingContact] = useState(false)
+
   const fetchAccounts = () => {
     if (!user?.id) return
     apiFetch(`/bank/accounts/${user.id}`)
@@ -56,6 +64,17 @@ export default function Settings() {
   }
 
   useEffect(() => { fetchAccounts() }, [user?.id])
+
+  const fetchContacts = () => {
+    if (!user?.id) return
+    apiFetch('/contacts')
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setContacts(Array.isArray(d) ? d : []))
+      .catch(() => setContacts([]))
+      .finally(() => setContactsLoading(false))
+  }
+
+  useEffect(() => { fetchContacts() }, [user?.id])
 
   // Fetch PIN status
   useEffect(() => {
@@ -97,9 +116,96 @@ export default function Settings() {
 
   const handleLogout = () => { logout(); navigate('/login') }
 
-  const initials = user?.name
-    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?'
+  const handleProfilePhoto = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setToast({ type: 'error', message: 'Choose an image file.' })
+      return
+    }
+    if (file.size > 550 * 1024) {
+      setToast({ type: 'error', message: 'Choose an image under 550 KB.' })
+      return
+    }
+
+    setPhotoLoading(true)
+    const reader = new FileReader()
+    reader.onload = async () => {
+      try {
+        const res = await apiFetch('/user/profile-picture', {
+          method: 'PUT',
+          body: JSON.stringify({ profilePictureUrl: reader.result }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.error || 'Failed to update picture.')
+        updateUser(data)
+        setToast({ type: 'success', message: 'Profile picture updated!' })
+      } catch (err) {
+        setToast({ type: 'error', message: err.message })
+      } finally {
+        setPhotoLoading(false)
+        e.target.value = ''
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveProfilePhoto = async () => {
+    setPhotoLoading(true)
+    try {
+      const res = await apiFetch('/user/profile-picture', {
+        method: 'PUT',
+        body: JSON.stringify({ profilePictureUrl: '' }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Failed to remove picture.')
+      updateUser(data)
+      setToast({ type: 'info', message: 'Profile picture removed.' })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message })
+    } finally {
+      setPhotoLoading(false)
+    }
+  }
+
+  const handleAddContact = async (e) => {
+    e.preventDefault()
+    setContactError('')
+    if (!contactForm.recipientIdentifier.trim()) {
+      setContactError('Enter a recipient ID, email, or phone.')
+      return
+    }
+    setSavingContact(true)
+    try {
+      const res = await apiFetch('/contacts', {
+        method: 'POST',
+        body: JSON.stringify({
+          recipientIdentifier: contactForm.recipientIdentifier.trim(),
+          nickname: contactForm.nickname.trim(),
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Failed to save favourite.')
+      setContactForm({ recipientIdentifier: '', nickname: '' })
+      setToast({ type: 'success', message: 'Favourite saved!' })
+      fetchContacts()
+    } catch (err) {
+      setContactError(err.message)
+    } finally {
+      setSavingContact(false)
+    }
+  }
+
+  const handleRemoveContact = async (id) => {
+    try {
+      const res = await apiFetch(`/contacts/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to remove favourite.')
+      setContacts(prev => prev.filter(c => c.id !== id))
+      setToast({ type: 'info', message: 'Favourite removed.' })
+    } catch (err) {
+      setToast({ type: 'error', message: err.message })
+    }
+  }
 
   const handleAddBank = async (e) => {
     e.preventDefault()
@@ -194,12 +300,21 @@ export default function Settings() {
       <div className="settings-section">
         <div className="settings-section-header">👤 Profile</div>
         <div style={{ padding: '1.5rem', display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-          <div className="avatar" style={{ width: '4rem', height: '4rem', fontSize: '1.25rem', flexShrink: 0 }}>
-            {initials}
-          </div>
-          <div>
+          <UserAvatar user={user} size="4rem" fontSize="1.25rem" />
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '1.125rem', fontWeight: 700 }}>{user?.name}</div>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{user?.email}</div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.875rem', flexWrap: 'wrap' }}>
+              <label className="btn-secondary" style={{ width: 'auto', padding: '0.45rem 0.875rem', fontSize: '0.8rem' }}>
+                {photoLoading ? 'Uploading...' : 'Upload Photo'}
+                <input type="file" accept="image/*" onChange={handleProfilePhoto} disabled={photoLoading} style={{ display: 'none' }} />
+              </label>
+              {user?.profilePictureUrl && (
+                <button type="button" className="btn-secondary" onClick={handleRemoveProfilePhoto} disabled={photoLoading} style={{ width: 'auto', padding: '0.45rem 0.875rem', fontSize: '0.8rem' }}>
+                  Remove
+                </button>
+              )}
+            </div>
             {user?.phoneNumber && (
               <div style={{ color: 'var(--text-faint)', fontSize: '0.8125rem', marginTop: '0.25rem' }}>
                 📱 {user.phoneNumber}
@@ -218,6 +333,48 @@ export default function Settings() {
       </div>
 
       {/* ════════════ BANK ACCOUNTS ════════════ */}
+      <div className="settings-section" style={{ marginBottom: '1rem' }}>
+        <div className="settings-section-header">Contacts & Favourites</div>
+        <div style={{ padding: '1.25rem 1.5rem', display: 'grid', gap: '1rem' }}>
+          <form onSubmit={handleAddContact} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr auto', gap: '0.75rem', alignItems: 'end' }}>
+            <div>
+              <label className="label">Recipient ID, Email, or Phone</label>
+              <input className="input-field" value={contactForm.recipientIdentifier} onChange={e => setContactForm(f => ({ ...f, recipientIdentifier: e.target.value }))} placeholder="e.g. 12 or user@email.com" />
+            </div>
+            <div>
+              <label className="label">Nickname</label>
+              <input className="input-field" value={contactForm.nickname} onChange={e => setContactForm(f => ({ ...f, nickname: e.target.value }))} placeholder="Optional" />
+            </div>
+            <button className="btn-primary" type="submit" disabled={savingContact} style={{ width: 'auto', whiteSpace: 'nowrap' }}>
+              {savingContact ? 'Saving...' : 'Save'}
+            </button>
+          </form>
+          {contactError && <div className="alert-error">{contactError}</div>}
+          {contactsLoading ? (
+            <div style={{ color: 'var(--text-faint)', fontSize: '0.875rem' }}>Loading favourites...</div>
+          ) : contacts.length === 0 ? (
+            <div style={{ color: 'var(--text-faint)', fontSize: '0.875rem', background: 'var(--bg-input)', borderRadius: '0.875rem', padding: '1rem' }}>
+              Save frequent recipients here, then pick them instantly while sending money or creating splits.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '0.625rem' }}>
+              {contacts.map(contact => (
+                <div key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '0.875rem', padding: '0.75rem' }}>
+                  <UserAvatar name={contact.name} src={contact.profilePictureUrl} size="2.25rem" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{contact.nickname || contact.name || `User #${contact.contactUserId}`}</div>
+                    <div style={{ color: 'var(--text-faint)', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      ID #{contact.contactUserId}{contact.email ? ` - ${contact.email}` : ''}
+                    </div>
+                  </div>
+                  <button type="button" className="btn-danger" onClick={() => handleRemoveContact(contact.id)}>Remove</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="settings-section" style={{ marginBottom: '1rem' }}>
         <div className="settings-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>🏦 Bank Accounts</span>

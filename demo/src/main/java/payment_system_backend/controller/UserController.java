@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -128,6 +129,28 @@ public class UserController {
                     return ResponseEntity.ok().body("User deleted successfully");
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/profile-picture")
+    public ResponseEntity<?> updateProfilePicture(@RequestBody Map<String, String> body,
+                                                  Authentication authentication) {
+        try {
+            User user = currentUser(authentication);
+            String profilePictureUrl = body.get("profilePictureUrl");
+            if (profilePictureUrl != null && !profilePictureUrl.isBlank()) {
+                if (!profilePictureUrl.startsWith("data:image/")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Upload a valid image file."));
+                }
+                if (profilePictureUrl.length() > 750_000) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Image is too large. Please choose a smaller picture."));
+                }
+            }
+            user.setProfilePictureUrl(profilePictureUrl == null || profilePictureUrl.isBlank() ? null : profilePictureUrl);
+            userRepository.save(user);
+            return ResponseEntity.ok(user);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(401).body(Map.of("error", ex.getMessage()));
+        }
     }
 
     @GetMapping("/pin-status")

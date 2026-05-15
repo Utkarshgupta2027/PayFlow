@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { apiFetch } from '../api.js'
+import UserAvatar from '../components/UserAvatar.jsx'
 
 export default function SplitPayment() {
   const { user } = useAuth()
@@ -13,6 +14,7 @@ export default function SplitPayment() {
   const [form, setForm] = useState({ title: '', totalAmount: '', participantIds: '' })
   const [formError, setFormError] = useState(null)
   const [formSuccess, setFormSuccess] = useState(null)
+  const [contacts, setContacts] = useState([])
 
   const loadSplits = useCallback(async () => {
     if (!user?.id) return
@@ -24,6 +26,23 @@ export default function SplitPayment() {
   }, [user?.id])
 
   useEffect(() => { loadSplits() }, [loadSplits])
+
+  useEffect(() => {
+    if (!user?.id) return
+    apiFetch('/contacts')
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setContacts(Array.isArray(d) ? d : []))
+      .catch(() => setContacts([]))
+  }, [user?.id])
+
+  const addParticipant = (contact) => {
+    setForm(f => {
+      const ids = f.participantIds.split(',').map(s => s.trim()).filter(Boolean)
+      const nextId = String(contact.contactUserId)
+      if (!ids.includes(nextId)) ids.push(nextId)
+      return { ...f, participantIds: ids.join(', ') }
+    })
+  }
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -132,6 +151,22 @@ export default function SplitPayment() {
                 value={form.participantIds}
                 onChange={e => setForm(f => ({ ...f, participantIds: e.target.value }))}
               />
+              {contacts.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                  {contacts.slice(0, 8).map(contact => (
+                    <button
+                      key={contact.id}
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => addParticipant(contact)}
+                      style={{ width: 'auto', padding: '0.375rem 0.625rem', fontSize: '0.78rem' }}
+                    >
+                      <UserAvatar name={contact.name} src={contact.profilePictureUrl} size="1.5rem" fontSize="0.65rem" />
+                      {contact.nickname || contact.name || `#${contact.contactUserId}`}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)', marginTop: '0.375rem' }}>
                 Your ID: <strong style={{ color: 'var(--accent)' }}>#{user?.id}</strong> — you are automatically included
               </div>
@@ -207,9 +242,7 @@ export default function SplitPayment() {
               {split.participants?.map(p => (
                 <div key={p.id} className="participant-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                    <div className="avatar" style={{ width: '1.75rem', height: '1.75rem', fontSize: '0.7rem' }}>
-                      {(p.userName || 'U').charAt(0).toUpperCase()}
-                    </div>
+                    <UserAvatar name={p.userName} src={p.profilePictureUrl} size="1.75rem" fontSize="0.7rem" />
                     <span style={{ color: p.userId === user?.id ? 'var(--accent-light)' : 'var(--text-muted)' }}>
                       {p.userName || `User #${p.userId}`}
                       {p.userId === user?.id && ' (you)'}

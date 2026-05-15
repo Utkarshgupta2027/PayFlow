@@ -4,6 +4,7 @@ import { useOutletContext, useNavigate, useSearchParams } from 'react-router-dom
 import { apiFetch } from '../api.js'
 import API_BASE from '../api.js'
 import PinModal from '../components/PinModal.jsx'
+import UserAvatar from '../components/UserAvatar.jsx'
 
 function fmtCurrency(n) {
   return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2 })
@@ -44,6 +45,7 @@ export default function SendMoney() {
   const [qrPrefilled, setQrPrefilled] = useState(false)
   const [receiverInfo, setReceiverInfo] = useState(null)
   const [risk, setRisk] = useState(null)
+  const [contacts, setContacts] = useState([])
   const riskTimer = useRef(null)
 
   // PIN modal state
@@ -73,6 +75,24 @@ export default function SendMoney() {
       .then(d => { if (d) setPinRequired(!!d.pinSet) })
       .catch(() => {})
   }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    apiFetch('/contacts')
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setContacts(Array.isArray(d) ? d : []))
+      .catch(() => setContacts([]))
+  }, [user?.id])
+
+  const pickContact = (contact) => {
+    setForm(f => ({ ...f, receiverId: String(contact.contactUserId) }))
+    setReceiverInfo({
+      id: contact.contactUserId,
+      name: contact.name || contact.nickname || `User #${contact.contactUserId}`,
+      profilePictureUrl: contact.profilePictureUrl,
+    })
+    setQrPrefilled(false)
+  }
 
   // Live risk preview — debounced 600ms after amount changes
   useEffect(() => {
@@ -221,12 +241,7 @@ export default function SendMoney() {
                 borderRadius: '0.875rem', padding: '0.875rem 1rem', marginBottom: '0.75rem',
                 animation: 'slideUp 0.3s ease-out'
               }}>
-                <div style={{
-                  width: '2.5rem', height: '2.5rem', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--gradient-from), var(--gradient-to))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 700, color: 'white', fontSize: '1rem', flexShrink: 0
-                }}>{receiverInfo.name?.[0]?.toUpperCase()}</div>
+                <UserAvatar user={receiverInfo} size="2.5rem" fontSize="1rem" />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
                     {receiverInfo.name}
@@ -247,7 +262,23 @@ export default function SendMoney() {
               value={form.receiverId}
               onChange={e => { setForm(f => ({ ...f, receiverId: e.target.value })); setQrPrefilled(false); setReceiverInfo(null) }}
               required
-            />
+              />
+            {contacts.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                {contacts.slice(0, 6).map(contact => (
+                  <button
+                    key={contact.id}
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => pickContact(contact)}
+                    style={{ width: 'auto', padding: '0.375rem 0.625rem', fontSize: '0.78rem' }}
+                  >
+                    <UserAvatar name={contact.name} src={contact.profilePictureUrl} size="1.5rem" fontSize="0.65rem" />
+                    {contact.nickname || contact.name || `#${contact.contactUserId}`}
+                  </button>
+                ))}
+              </div>
+            )}
             <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)', marginTop: '0.375rem' }}>
               💡 Or <button type="button" onClick={() => navigate('/qr')} style={{ background: 'none', border: 'none', color: 'var(--accent-light)', cursor: 'pointer', fontSize: '0.75rem', padding: 0, fontWeight: 600 }}>scan a QR code</button> to auto-fill
             </div>

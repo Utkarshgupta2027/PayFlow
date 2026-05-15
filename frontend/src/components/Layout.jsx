@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { WebSocketProvider } from '../context/WebSocketContext.jsx'
 import Toast from './Toast.jsx'
+import UserAvatar from './UserAvatar.jsx'
 import { apiFetch } from '../api.js'
 
 const NAV_ITEMS = [
@@ -68,10 +69,6 @@ export default function Layout() {
     navigate('/login')
   }
 
-  const initials = user?.name
-    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?'
-
   return (
     <WebSocketProvider
       userEmail={user?.email}
@@ -95,7 +92,7 @@ export default function Layout() {
                 <span className="notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
               )}
             </button>
-            <div className="avatar" style={{ width: '2rem', height: '2rem', fontSize: '0.75rem' }}>{initials}</div>
+            <UserAvatar user={user} size="2rem" fontSize="0.75rem" />
           </div>
         </header>
 
@@ -165,7 +162,7 @@ export default function Layout() {
 
           <div className="sidebar-user">
             <div style={{ position: 'relative' }}>
-              <div className="avatar">{initials}</div>
+              <UserAvatar user={user} />
               {/* Online indicator */}
               <span style={{
                 position: 'absolute', bottom: 0, right: 0,

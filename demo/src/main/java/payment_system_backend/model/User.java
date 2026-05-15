@@ -23,6 +23,10 @@ public class User {
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
+    @Lob
+    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
+    private String profilePictureUrl;
+
     @Column(name = "referral_code", unique = true)
     private String referralCode;
 
@@ -57,6 +61,7 @@ public class User {
     public double getBalance() { return balance; }
     public int getAccountAgeDays() { return accountAgeDays; }
     public String getPhoneNumber() { return phoneNumber; }
+    public String getProfilePictureUrl() { return profilePictureUrl; }
     public String getReferralCode() { return referralCode; }
     public String getReferredBy() { return referredBy; }
     public String getRole() { return role; }
@@ -75,6 +80,7 @@ public class User {
     public void setBalance(double balance) { this.balance = balance; }
     public void setAccountAgeDays(int accountAgeDays) { this.accountAgeDays = accountAgeDays; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setProfilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; }
     public void setReferralCode(String referralCode) { this.referralCode = referralCode; }
     public void setReferredBy(String referredBy) { this.referredBy = referredBy; }
     public void setRole(String role) { this.role = role; }

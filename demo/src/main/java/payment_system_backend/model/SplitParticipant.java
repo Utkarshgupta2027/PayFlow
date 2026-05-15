@@ -22,6 +22,10 @@ public class SplitParticipant {
     @Column(name = "user_name", length = 100)
     private String userName;
 
+    @Lob
+    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
+    private String profilePictureUrl;
+
     @Column(name = "amount_owed", nullable = false)
     private double amountOwed;
 
@@ -37,6 +41,7 @@ public class SplitParticipant {
     public SplitPayment getSplitPayment() { return splitPayment; }
     public Long getUserId() { return userId; }
     public String getUserName() { return userName; }
+    public String getProfilePictureUrl() { return profilePictureUrl; }
     public double getAmountOwed() { return amountOwed; }
     public double getAmountPaid() { return amountPaid; }
     public boolean isPaid() { return paid; }
@@ -47,6 +52,7 @@ public class SplitParticipant {
     public void setSplitPayment(SplitPayment splitPayment) { this.splitPayment = splitPayment; }
     public void setUserId(Long userId) { this.userId = userId; }
     public void setUserName(String userName) { this.userName = userName; }
+    public void setProfilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; }
     public void setAmountOwed(double amountOwed) { this.amountOwed = amountOwed; }
     public void setAmountPaid(double amountPaid) { this.amountPaid = amountPaid; }
     public void setPaid(boolean paid) { this.paid = paid; }
