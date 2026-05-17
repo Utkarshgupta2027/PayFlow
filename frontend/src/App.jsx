@@ -18,6 +18,8 @@ import RequestMoney from './pages/RequestMoney.jsx'
 import ScheduledPayments from './pages/ScheduledPayments.jsx'
 import Feedback from './pages/Feedback.jsx'
 import CheckBalance from './pages/CheckBalance.jsx'
+import Transactions from './pages/Transactions.jsx'
+import BillPayments from './pages/BillPayments.jsx'
 import Layout from './components/Layout.jsx'
 
 function PrivateRoute({ children }) {
@@ -49,6 +51,8 @@ export default function App() {
             <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="transactions" element={<Transactions />} />
+              <Route path="bills" element={<BillPayments />} />
               <Route path="rewards" element={<Rewards />} />
               <Route path="referral" element={<Referral />} />
               <Route path="settings" element={<Settings />} />

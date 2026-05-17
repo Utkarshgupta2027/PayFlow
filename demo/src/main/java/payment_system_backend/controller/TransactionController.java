@@ -88,6 +88,12 @@ public class TransactionController {
             Transaction tx = transactionService.sendMoney(sender.getId(), actualReceiverId, amount, description);
 
             int pointsAwarded = rewardService.awardTransactionPoints(sender.getId(), amount);
+            double cashback = rewardService.calculateCashback(amount, "TRANSFER");
+            if (cashback > 0) {
+                User creditedSender = userRepository.findById(sender.getId()).orElse(sender);
+                creditedSender.setBalance(creditedSender.getBalance() + cashback);
+                userRepository.save(creditedSender);
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Payment Successful");
@@ -95,6 +101,7 @@ public class TransactionController {
             response.put("riskScore", tx.getRiskScore());
             response.put("riskLevel", tx.getRiskLevel());
             response.put("pointsAwarded", pointsAwarded);
+            response.put("cashback", cashback);
             response.put("totalPoints", rewardService.getTotalPoints(sender.getId()));
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
@@ -142,6 +149,32 @@ public class TransactionController {
         all.sort(Comparator.comparing(Transaction::getTime,
                 Comparator.nullsLast(Comparator.reverseOrder())));
         return all;
+    }
+
+    @GetMapping("/search/{userId}")
+    public List<Transaction> searchHistory(@PathVariable("userId") Long userId,
+                                           @RequestParam(required = false) String from,
+                                           @RequestParam(required = false) String to,
+                                           @RequestParam(required = false) Double minAmount,
+                                           @RequestParam(required = false) Double maxAmount,
+                                           @RequestParam(required = false) String userQuery,
+                                           Authentication authentication) {
+        List<Transaction> all = history(userId, authentication);
+        LocalDate fromDate = parseDate(from);
+        LocalDate toDate = parseDate(to);
+        String query = userQuery == null ? "" : userQuery.trim().toLowerCase();
+
+        return all.stream()
+                .filter(t -> fromDate == null || (t.getTime() != null && !t.getTime().toLocalDate().isBefore(fromDate)))
+                .filter(t -> toDate == null || (t.getTime() != null && !t.getTime().toLocalDate().isAfter(toDate)))
+                .filter(t -> minAmount == null || t.getAmount() >= minAmount)
+                .filter(t -> maxAmount == null || t.getAmount() <= maxAmount)
+                .filter(t -> query.isBlank()
+                        || String.valueOf(t.getSenderId()).contains(query)
+                        || String.valueOf(t.getReceiverId()).contains(query)
+                        || (t.getDescription() != null && t.getDescription().toLowerCase().contains(query))
+                        || (t.getCategory() != null && t.getCategory().toLowerCase().contains(query)))
+                .toList();
     }
 
     // ─── Refund ───────────────────────────────────────────────────────────────
@@ -276,5 +309,12 @@ public class TransactionController {
             throw new RuntimeException("Authenticated user not found");
         }
         return user;
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return LocalDate.parse(value);
     }
 }

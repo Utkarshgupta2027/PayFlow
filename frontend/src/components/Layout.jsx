@@ -8,6 +8,8 @@ import UserAvatar from './UserAvatar.jsx'
 import { apiFetch } from '../api.js'
 
 const NAV_ITEMS = [
+  { to: '/transactions', icon: 'List', label: 'Transactions' },
+  { to: '/bills',     icon: 'Bill', label: 'Bill Payments' },
   { to: '/',          icon: '🏠', label: 'Dashboard',   end: true },
   { to: '/analytics', icon: '📊', label: 'Analytics' },
   { to: '/rewards',   icon: '⭐', label: 'Rewards' },

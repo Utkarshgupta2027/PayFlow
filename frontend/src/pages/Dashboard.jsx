@@ -369,6 +369,8 @@ export default function Dashboard() {
           { icon: '➕', label: 'Add Money', action: () => setShowAddMoney(true) },
           { icon: '->', label: 'Withdraw', action: () => setShowWithdraw(true) },
           { icon: 'Rs', label: 'Check Balance', path: '/check-balance' },
+          { icon: 'Bill', label: 'Bills', path: '/bills' },
+          { icon: 'List', label: 'Transactions', path: '/transactions' },
           { icon: '💸', label: 'Send', path: '/send' },
           { icon: '📷', label: 'Scan QR', path: '/qr' },
           { icon: '📊', label: 'Analytics', path: '/analytics' },
@@ -387,7 +389,7 @@ export default function Dashboard() {
           <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Recent Transactions</h2>
           <button
             className="btn-secondary"
-            onClick={() => navigate('/analytics')}
+            onClick={() => navigate('/transactions')}
             style={{ padding: '0.375rem 0.875rem', fontSize: '0.8125rem', width: 'auto' }}
           >
             View all →

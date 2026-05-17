@@ -26,6 +26,7 @@ public class RewardController {
         Map<String, Object> response = new HashMap<>();
         response.put("totalPoints", totalPoints);
         response.put("history", history);
+        response.put("cashbackOffers", rewardService.getCashbackOffers());
 
         // Tier calculation
         String tier;

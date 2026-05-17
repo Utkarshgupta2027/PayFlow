@@ -7,6 +7,7 @@ import payment_system_backend.repository.RewardRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -16,6 +17,29 @@ public class RewardService {
     private RewardRepository rewardRepository;
 
     private static final int DAILY_BONUS_POINTS = 50;
+
+    public double calculateCashback(double amount, String category) {
+        String normalized = category == null ? "" : category.toUpperCase();
+        if (amount >= 500 && (normalized.contains("ELECTRICITY") || normalized.contains("DTH"))) {
+            return roundMoney(Math.min(75, amount * 0.05));
+        }
+        if (amount >= 199 && (normalized.contains("RECHARGE") || normalized.contains("MOBILE"))) {
+            return roundMoney(Math.min(30, amount * 0.03));
+        }
+        if (amount >= 1000 && normalized.contains("TRANSFER")) {
+            return roundMoney(Math.min(50, amount * 0.02));
+        }
+        return 0;
+    }
+
+    public List<Map<String, Object>> getCashbackOffers() {
+        return List.of(
+                Map.of("title", "Electricity Saver", "category", "ELECTRICITY", "details", "5% cashback up to INR 75 on payments above INR 500"),
+                Map.of("title", "Mobile Recharge Boost", "category", "RECHARGE", "details", "3% cashback up to INR 30 on recharges above INR 199"),
+                Map.of("title", "DTH Weekend Value", "category", "DTH", "details", "5% cashback up to INR 75 on DTH payments above INR 500"),
+                Map.of("title", "Large Transfer Reward", "category", "TRANSFER", "details", "2% cashback up to INR 50 on transfers above INR 1,000")
+        );
+    }
 
     /** Award points for a completed transaction. Points = floor(amount / 10), min 1. */
     public int awardTransactionPoints(Long userId, double amount) {
@@ -66,5 +90,9 @@ public class RewardService {
     /** Get reward history for a user (newest first). */
     public List<Reward> getHistory(Long userId) {
         return rewardRepository.findByUserIdOrderByDateDesc(userId);
+    }
+
+    private double roundMoney(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

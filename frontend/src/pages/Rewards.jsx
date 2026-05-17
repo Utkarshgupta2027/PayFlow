@@ -197,6 +197,22 @@ export default function Rewards() {
         ))}
       </div>
 
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: '0 0 0.875rem' }}>Cashback Offers</h2>
+        {(rewards?.cashbackOffers || []).map(offer => (
+          <div key={offer.title} className="reward-item">
+            <div className="reward-icon">%</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{offer.title}</div>
+              <div style={{ color: 'var(--text-faint)', fontSize: '0.8125rem' }}>{offer.details}</div>
+            </div>
+            <div style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', padding: '0.25rem 0.625rem', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid rgba(16,185,129,0.25)' }}>
+              {offer.category}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* History */}
       <div className="card">
         <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: '0 0 0.875rem' }}>📜 Points History</h2>
