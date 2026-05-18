@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 import { useNavigate } from 'react-router-dom'
 import { useOutletContext } from 'react-router-dom'
 import API_BASE, { apiFetch } from '../api.js'
@@ -27,6 +28,7 @@ const emptyForm = { accountHolderName: '', accountNumber: '', confirmAccountNumb
 export default function Settings() {
   const { user, logout, updateUser } = useAuth()
   const { theme, changeTheme } = useTheme()
+  const { language, languages, changeLanguage, t } = useLanguage()
   const navigate = useNavigate()
   const { setToast } = useOutletContext()
 
@@ -294,6 +296,31 @@ export default function Settings() {
       <div style={{ marginBottom: '1.75rem' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>⚙️ Settings</h1>
         <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Manage your account and preferences</p>
+      </div>
+
+      <div className="settings-section">
+        <div className="settings-section-header">{t('settings.language')}</div>
+        <div style={{ padding: '1.25rem 1.5rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0 0 1rem' }}>
+            {t('settings.languageHelp')}
+          </p>
+          <div className="language-grid">
+            {Object.entries(languages).map(([key, cfg]) => (
+              <button
+                key={key}
+                type="button"
+                className={`language-btn ${language === key ? 'selected' : ''}`}
+                onClick={() => {
+                  changeLanguage(key)
+                  setToast({ type: 'info', message: cfg.nativeLabel + ' - ' + t('settings.languageApplied'), duration: 2200 })
+                }}
+              >
+                <span style={{ fontWeight: 800 }}>{cfg.nativeLabel}</span>
+                <span style={{ color: 'var(--text-faint)', fontSize: '0.75rem' }}>{cfg.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Profile */}

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+import { LanguageProvider } from './context/LanguageContext.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
@@ -42,33 +43,35 @@ function PublicRoute({ children }) {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-            <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-              <Route index element={<Dashboard />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="bills" element={<BillPayments />} />
-              <Route path="rewards" element={<Rewards />} />
-              <Route path="referral" element={<Referral />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="send" element={<SendMoney />} />
-              <Route path="request" element={<RequestMoney />} />
-              <Route path="check-balance" element={<CheckBalance />} />
-              <Route path="qr" element={<QRPage />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="split" element={<SplitPayment />} />
-              <Route path="scheduled" element={<ScheduledPayments />} />
-              <Route path="feedback" element={<Feedback />} />
-              <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+              <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+              <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+                <Route index element={<Dashboard />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="transactions" element={<Transactions />} />
+                <Route path="bills" element={<BillPayments />} />
+                <Route path="rewards" element={<Rewards />} />
+                <Route path="referral" element={<Referral />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="send" element={<SendMoney />} />
+                <Route path="request" element={<RequestMoney />} />
+                <Route path="check-balance" element={<CheckBalance />} />
+                <Route path="qr" element={<QRPage />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="split" element={<SplitPayment />} />
+                <Route path="scheduled" element={<ScheduledPayments />} />
+                <Route path="feedback" element={<Feedback />} />
+                <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   )
 }

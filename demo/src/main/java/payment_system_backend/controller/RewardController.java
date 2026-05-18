@@ -27,14 +27,10 @@ public class RewardController {
         response.put("totalPoints", totalPoints);
         response.put("history", history);
         response.put("cashbackOffers", rewardService.getCashbackOffers());
-
-        // Tier calculation
-        String tier;
-        if (totalPoints >= 5000) tier = "PLATINUM";
-        else if (totalPoints >= 2000) tier = "GOLD";
-        else if (totalPoints >= 500) tier = "SILVER";
-        else tier = "BRONZE";
-        response.put("tier", tier);
+        Map<String, Object> tier = rewardService.getLoyaltyTier(totalPoints);
+        response.put("tier", tier.get("name"));
+        response.put("loyaltyTier", tier);
+        response.put("loyaltyTiers", rewardService.getLoyaltyTiers());
 
         return ResponseEntity.ok(response);
     }

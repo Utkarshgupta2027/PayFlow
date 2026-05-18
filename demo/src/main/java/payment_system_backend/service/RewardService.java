@@ -6,6 +6,7 @@ import payment_system_backend.model.Reward;
 import payment_system_backend.repository.RewardRepository;
 
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +18,58 @@ public class RewardService {
     private RewardRepository rewardRepository;
 
     private static final int DAILY_BONUS_POINTS = 50;
+
+    public Map<String, Object> getLoyaltyTier(int totalPoints) {
+        String name;
+        int minPoints;
+        Integer nextAt;
+        int multiplier;
+        List<String> benefits;
+
+        if (totalPoints >= 5000) {
+            name = "PLATINUM";
+            minPoints = 5000;
+            nextAt = null;
+            multiplier = 4;
+            benefits = List.of("4x reward accelerator", "Highest cashback priority", "Priority support", "Early access to new offers");
+        } else if (totalPoints >= 2000) {
+            name = "GOLD";
+            minPoints = 2000;
+            nextAt = 5000;
+            multiplier = 3;
+            benefits = List.of("3x reward accelerator", "Higher cashback priority", "Faster support");
+        } else if (totalPoints >= 500) {
+            name = "SILVER";
+            minPoints = 500;
+            nextAt = 2000;
+            multiplier = 2;
+            benefits = List.of("2x reward accelerator", "Extra cashback visibility", "Monthly offer boosts");
+        } else {
+            name = "BRONZE";
+            minPoints = 0;
+            nextAt = 500;
+            multiplier = 1;
+            benefits = List.of("Base rewards on every payment", "Daily bonus eligibility");
+        }
+
+        Map<String, Object> tier = new LinkedHashMap<>();
+        tier.put("name", name);
+        tier.put("minPoints", minPoints);
+        tier.put("nextAt", nextAt);
+        tier.put("pointsToNext", nextAt == null ? 0 : Math.max(0, nextAt - totalPoints));
+        tier.put("progressPercent", nextAt == null ? 100 : Math.min(100, Math.round(((totalPoints - minPoints) * 100.0) / (nextAt - minPoints))));
+        tier.put("rewardMultiplier", multiplier);
+        tier.put("benefits", benefits);
+        return tier;
+    }
+
+    public List<Map<String, Object>> getLoyaltyTiers() {
+        return List.of(
+                Map.of("name", "SILVER", "minPoints", 500, "rewardMultiplier", 2, "benefits", List.of("2x reward accelerator", "Monthly offer boosts")),
+                Map.of("name", "GOLD", "minPoints", 2000, "rewardMultiplier", 3, "benefits", List.of("3x reward accelerator", "Higher cashback priority")),
+                Map.of("name", "PLATINUM", "minPoints", 5000, "rewardMultiplier", 4, "benefits", List.of("4x reward accelerator", "Priority support"))
+        );
+    }
 
     public double calculateCashback(double amount, String category) {
         String normalized = category == null ? "" : category.toUpperCase();
@@ -43,7 +96,9 @@ public class RewardService {
 
     /** Award points for a completed transaction. Points = floor(amount / 10), min 1. */
     public int awardTransactionPoints(Long userId, double amount) {
-        int points = Math.max(1, (int) Math.floor(amount / 10));
+        int currentPoints = getTotalPoints(userId);
+        int multiplier = ((Number) getLoyaltyTier(currentPoints).get("rewardMultiplier")).intValue();
+        int points = Math.max(1, (int) Math.floor(amount / 10)) * multiplier;
         Reward reward = new Reward();
         reward.setUserId(userId);
         reward.setPoints(points);

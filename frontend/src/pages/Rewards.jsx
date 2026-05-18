@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 import { useOutletContext } from 'react-router-dom'
 import API_BASE, { apiFetch } from '../api.js'
 
@@ -17,6 +18,7 @@ function fmtDate(s) {
 
 export default function Rewards() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const { setToast } = useOutletContext()
   const [rewards, setRewards] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -62,11 +64,13 @@ export default function Rewards() {
     }
   }
 
-  const tier = rewards ? TIERS[rewards.tier] || TIERS.BRONZE : TIERS.BRONZE
+  const loyaltyTier = rewards?.loyaltyTier
+  const tierName = loyaltyTier?.name || rewards?.tier
+  const tier = tierName ? TIERS[tierName] || TIERS.BRONZE : TIERS.BRONZE
   const totalPoints = rewards?.totalPoints || 0
-  const progress = tier.next
+  const progress = loyaltyTier?.progressPercent ?? (tier.next
     ? Math.min(100, ((totalPoints - tier.min) / (tier.nextAt - tier.min)) * 100)
-    : 100
+    : 100)
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
@@ -86,13 +90,13 @@ export default function Rewards() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
           <div>
             <div style={{ color: 'rgba(255,200,120,0.8)', fontSize: '0.8125rem', marginBottom: '0.375rem' }}>
-              Total Points Balance
+              {t('rewards.totalPoints')}
             </div>
             <div style={{ fontSize: '3rem', fontWeight: 900, color: '#fbbf24', letterSpacing: '-0.02em' }}>
               {totalPoints.toLocaleString()}
             </div>
             <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-              pts
+              {t('rewards.points')}
             </div>
           </div>
           <div className={`tier-badge ${tier.class}`} style={{ fontSize: '0.875rem', padding: '0.5rem 1.125rem' }}>
@@ -105,7 +109,7 @@ export default function Rewards() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'rgba(255,255,255,0.65)', marginBottom: '0.5rem' }}>
               <span>{tier.icon} {tier.label}</span>
-              <span>{tier.nextAt - totalPoints} pts to {tier.next}</span>
+              <span>{loyaltyTier?.pointsToNext ?? Math.max(0, tier.nextAt - totalPoints)} {t('rewards.toNext')} {tier.next}</span>
             </div>
             <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '99px', height: '8px', overflow: 'hidden' }}>
               <div style={{
@@ -148,6 +152,28 @@ export default function Rewards() {
         </div>
       </div>
 
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: '0 0 0.875rem' }}>{t('rewards.benefits')}</h2>
+        <div style={{ display: 'grid', gap: '0.625rem' }}>
+          {(loyaltyTier?.benefits || []).map(benefit => (
+            <div key={benefit} style={{
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '0.75rem',
+              padding: '0.75rem 0.875rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+            }}>
+              <span>{benefit}</span>
+              <span style={{ color: '#fbbf24', fontWeight: 800 }}>
+                {loyaltyTier?.rewardMultiplier || 1}x
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Daily Bonus */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: '0 0 0.875rem' }}>🎁 Daily Bonus</h2>
@@ -156,7 +182,7 @@ export default function Rewards() {
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>+50 Points Daily</div>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-              Log in every day to earn your daily bonus. Streak rewards coming soon!
+              {t('rewards.dailyCopy')}
             </div>
           </div>
         </div>
@@ -171,7 +197,7 @@ export default function Rewards() {
         </button>
         {alreadyClaimed && (
           <p style={{ textAlign: 'center', color: 'var(--text-faint)', fontSize: '0.8125rem', marginTop: '0.625rem' }}>
-            Come back tomorrow for your next bonus!
+            {t('rewards.comeBack')}
           </p>
         )}
       </div>
