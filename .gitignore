@@ -7,6 +7,7 @@ Thumbs.db
 
 # Java build output
 demo/target/
+demo/data/
 *.class
 *.jar
 
@@ -14,6 +15,12 @@ demo/target/
 frontend/node_modules/
 
 # Local env files (never commit secrets)
+.env
+.env.*
+!.env.example
+demo/.env
+demo/.env.*
+!demo/.env.example
 frontend/.env.local
 frontend/.env.production
 frontend/.env.development
