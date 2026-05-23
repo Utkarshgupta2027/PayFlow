@@ -62,13 +62,13 @@ public class FraudDetectionService {
 
         // Rule 3: New account + large transfer
         if (accountAgeDays < 3 && amount > 5_000) {
-            score += 50;
+            score += 70;
             reason.append("New account large transfer; ");
         }
 
         // Rule 4: Suspicious round number
-        if (amount % 1000 == 0 && amount > 10_000) {
-            score += 10;
+        if (amount <= 20_000 && amount % 1000 == 0 && amount > 10_000) {
+            score += 40;
             reason.append("Suspicious round-number amount; ");
         }
 
@@ -78,7 +78,7 @@ public class FraudDetectionService {
         if (score >= 70) {
             level = "HIGH";
             blocked = true;
-        } else if (score >= 40) {
+        } else if (score >= 30) {
             level = "MEDIUM";
             blocked = false;
         } else {
