@@ -24,6 +24,7 @@ COPY --from=build /app/target/*.jar app.jar
 
 # Railway injects $PORT; default to 8080 locally
 ENV PORT=8080
+ENV SPRING_PROFILES_ACTIVE=mysql
 
 EXPOSE $PORT
 
