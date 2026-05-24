@@ -30,6 +30,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers(
+                    "/", "/healthz",
                     "/user/register", "/user/login", "/user/refresh",
                     "/otp/**", "/api/email-otp/**", "/user/forgot-password/**", 
                     "/api/feedback/**", "/ws/**", "/qr/**", "/wallet/payment/webhook",
