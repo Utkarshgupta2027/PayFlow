@@ -25,7 +25,10 @@ public class EmailOtpController {
             otpService.sendEmailOtp(email);
             return ResponseEntity.ok(Map.of("message", "OTP sent successfully to " + email));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to send OTP"));
+            return ResponseEntity.internalServerError().body(Map.of(
+                "error", "Failed to send OTP",
+                "details", e.getMessage()
+            ));
         }
     }
 

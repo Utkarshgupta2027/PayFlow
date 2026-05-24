@@ -84,25 +84,41 @@ public class NotificationService {
     public void sendEmail(String to, String subject, String body, String replyTo) {
         if (mailSender == null || to == null || to.isBlank()) return;
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(body, false); // false = plain text
-            
-            if (fromEmail != null && !fromEmail.isBlank()) {
-                helper.setFrom(fromEmail, "PayFlow");
-            }
-            if (replyTo != null && !replyTo.isBlank()) {
-                helper.setReplyTo(replyTo);
-            }
-            
-            mailSender.send(message);
+            sendEmailOrThrow(to, subject, body, replyTo);
         } catch (Exception e) {
             // Log but don't crash — SMTP may not be configured
             System.err.println("[NotificationService] Email send failed: " + e.getMessage());
         }
+    }
+
+    public void sendEmailOrThrow(String to, String subject, String body) throws Exception {
+        sendEmailOrThrow(to, subject, body, null);
+    }
+
+    public void sendEmailOrThrow(String to, String subject, String body, String replyTo) throws Exception {
+        if (mailSender == null) {
+            throw new IllegalStateException("Mail sender is not configured");
+        }
+        if (fromEmail == null || fromEmail.isBlank()) {
+            throw new IllegalStateException("MAIL_USER is not configured");
+        }
+        if (to == null || to.isBlank()) {
+            throw new IllegalArgumentException("Recipient email is required");
+        }
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(body, false); // false = plain text
+        helper.setFrom(fromEmail, "PayFlow");
+
+        if (replyTo != null && !replyTo.isBlank()) {
+            helper.setReplyTo(replyTo);
+        }
+
+        mailSender.send(message);
     }
 
     public List<Notification> getNotifications(Long userId) {

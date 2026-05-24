@@ -85,11 +85,12 @@ public class OtpService {
 
         String subject = "Your PayFlow Email Verification OTP";
         String body = "Your OTP is: " + otp + "\n\nIt is valid for 5 minutes. Please do not share it with anyone.";
-        
+
         try {
-            notificationService.sendEmail(email, subject, body);
+            notificationService.sendEmailOrThrow(email, subject, body);
         } catch (Exception e) {
-            System.out.println("[DEV] Email OTP for " + email + " : " + otp);
+            System.err.println("[OtpService] Failed to send email OTP to " + email + ": " + e.getMessage());
+            throw new IllegalStateException("Unable to send verification email. Check MAIL_USER and MAIL_PASS.", e);
         }
 
         return otp;
