@@ -13,7 +13,8 @@ public class CorsConfig implements WebMvcConfigurer {
                     "http://localhost:3000",
                     "http://localhost:*",
                     "https://payment-system-9ev8.vercel.app",
-                    "https://*.vercel.app"
+                    "https://*.vercel.app",
+                    "https://*.onrender.com"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
