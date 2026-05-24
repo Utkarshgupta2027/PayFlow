@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import payment_system_backend.model.Notification;
 import payment_system_backend.repository.NotificationRepository;
@@ -119,6 +120,15 @@ public class NotificationService {
         }
 
         mailSender.send(message);
+    }
+
+    @Async
+    public void sendEmailAsync(String to, String subject, String body) {
+        try {
+            sendEmailOrThrow(to, subject, body);
+        } catch (Exception e) {
+            System.err.println("[NotificationService] Async email send failed for " + to + ": " + e.getMessage());
+        }
     }
 
     public List<Notification> getNotifications(Long userId) {
