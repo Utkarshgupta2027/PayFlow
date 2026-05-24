@@ -23,17 +23,18 @@ export default function PinModal({
   loading = false,
   length = 4,
 }) {
-  const [digits, setDigits] = useState(Array(length).fill(''))
+  const [pinValue, setPinValue] = useState('')
   const [shake, setShake] = useState(false)
   const [visible, setVisible] = useState(false)
-  const inputRefs = useRef([])
+  const [isFocused, setIsFocused] = useState(false)
+  const hiddenInputRef = useRef(null)
 
-  // Focus first input when opened
+  // Focus input when opened
   useEffect(() => {
     if (isOpen) {
-      setDigits(Array(length).fill(''))
+      setPinValue('')
       setShake(false)
-      setTimeout(() => inputRefs.current[0]?.focus(), 80)
+      setTimeout(() => hiddenInputRef.current?.focus(), 80)
     }
   }, [isOpen, length])
 
@@ -41,55 +42,43 @@ export default function PinModal({
   useEffect(() => {
     if (error) {
       setShake(true)
-      setDigits(Array(length).fill(''))
+      setPinValue('')
       setTimeout(() => {
         setShake(false)
-        inputRefs.current[0]?.focus()
+        hiddenInputRef.current?.focus()
       }, 600)
     }
-  }, [error, length])
+  }, [error])
 
   if (!isOpen) return null
 
-  const handleKey = (e, idx) => {
-    const { key } = e
-    if (key === 'Backspace') {
-      e.preventDefault()
-      if (digits[idx]) {
-        const next = [...digits]; next[idx] = ''; setDigits(next)
-      } else if (idx > 0) {
-        const next = [...digits]; next[idx - 1] = ''; setDigits(next)
-        inputRefs.current[idx - 1]?.focus()
-      }
-      return
-    }
-    if (key === 'Enter') { handleConfirm(); return }
-    if (key === 'Escape') { onCancel(); return }
-    if (!/^\d$/.test(key)) { e.preventDefault(); return }
-
-    e.preventDefault()
-    const next = [...digits]; next[idx] = key; setDigits(next)
-    if (idx < length - 1) inputRefs.current[idx + 1]?.focus()
+  const handleInputChange = (e) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, length)
+    setPinValue(val)
   }
 
-  const handlePaste = (e) => {
-    e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length)
-    if (!pasted) return
-    const next = Array(length).fill('')
-    pasted.split('').forEach((d, i) => { if (i < length) next[i] = d })
-    setDigits(next)
-    const focusIdx = Math.min(pasted.length, length - 1)
-    inputRefs.current[focusIdx]?.focus()
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (pinValue.length === length && !loading) {
+        onConfirm(pinValue)
+      }
+    } else if (e.key === 'Escape') {
+      onCancel()
+    }
   }
 
   const handleConfirm = () => {
-    const pin = digits.join('')
-    if (pin.length < length) { inputRefs.current[digits.findIndex(d => !d)]?.focus(); return }
-    onConfirm(pin)
+    if (pinValue.length === length && !loading) {
+      onConfirm(pinValue)
+    }
   }
 
-  const filled = digits.filter(Boolean).length
+  const focusInput = () => {
+    hiddenInputRef.current?.focus()
+  }
+
+  const digits = Array(length).fill('').map((_, i) => pinValue[i] || '')
+  const filled = pinValue.length
 
   return (
     <div className="pin-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
@@ -113,24 +102,48 @@ export default function PinModal({
           </p>
         </div>
 
-        {/* Digit inputs */}
-        <div className="pin-input-group" onPaste={handlePaste}>
-          {digits.map((d, i) => (
-            <input
-              key={i}
-              id={`pin-digit-${i}`}
-              ref={el => (inputRefs.current[i] = el)}
-              className={`pin-digit${d ? ' pin-digit-filled' : ''}`}
-              type={visible ? 'text' : 'password'}
-              inputMode="numeric"
-              maxLength={1}
-              value={d}
-              readOnly
-              onKeyDown={e => handleKey(e, i)}
-              onClick={() => inputRefs.current[i]?.focus()}
-              autoComplete="off"
-            />
-          ))}
+        {/* Hidden input field for mobile/accessibility keyboard support */}
+        <input
+          ref={hiddenInputRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={length}
+          value={pinValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          style={{
+            position: 'absolute',
+            opacity: 0,
+            pointerEvents: 'none',
+            width: '1px',
+            height: '1px',
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+          }}
+          autoComplete="one-time-code"
+        />
+
+        {/* Visual Digit boxes */}
+        <div className="pin-input-group" onClick={focusInput} style={{ cursor: 'pointer' }}>
+          {digits.map((d, i) => {
+            const isDigitFocused = isFocused && (
+              i === filled || (filled === length && i === length - 1)
+            )
+            const displayChar = d ? (visible ? d : '●') : ''
+            return (
+              <div
+                key={i}
+                id={`pin-digit-${i}`}
+                className={`pin-digit${d ? ' pin-digit-filled' : ''}${isDigitFocused ? ' pin-digit-focused' : ''}`}
+              >
+                {displayChar}
+              </div>
+            )
+          })}
         </div>
 
         {/* Progress dots */}

@@ -1586,6 +1586,9 @@ body {
 }
 
 .pin-digit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 3.25rem;
   height: 3.75rem;
   border-radius: 0.875rem;
@@ -1603,7 +1606,8 @@ body {
   letter-spacing: 0.1em;
 }
 
-.pin-digit:focus {
+.pin-digit:focus,
+.pin-digit-focused {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
   background: var(--bg-surface);
