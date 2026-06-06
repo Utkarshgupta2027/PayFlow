@@ -1,0 +1,1150 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PayFlow Complete Project Report</title>
+<style>
+@page { size: A4; margin: 0.7in; }
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.42; color: #111827; }
+h1 { font-size: 24pt; border-bottom: 2px solid #111827; padding-bottom: 8px; }
+h2 { font-size: 18pt; margin-top: 28px; border-bottom: 1px solid #d1d5db; padding-bottom: 5px; }
+h3 { font-size: 14pt; margin-top: 18px; }
+h4 { font-size: 12pt; margin-top: 14px; }
+p { margin: 6px 0; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 9pt; }
+th, td { border: 1px solid #d1d5db; padding: 5px 7px; vertical-align: top; }
+th { background: #f3f4f6; font-weight: 700; }
+pre { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; white-space: pre-wrap; font-size: 8.5pt; }
+code { font-family: Consolas, monospace; color: #0f172a; }
+.pagebreak { page-break-after: always; }
+</style>
+</head>
+<body>
+<h1>PayFlow Complete Project Documentation and Interview Preparation Report</h1>
+<p>Prepared for: College Viva, Internship Interviews, Placement Interviews, Project Presentation, Resume Documentation  </p>
+<p>Project name: PayFlow  </p>
+<p>Project type: Full-stack digital wallet and payment system  </p>
+<p>Backend: Java 17, Spring Boot, Spring Security, Spring Data JPA, WebSocket/STOMP, JWT, Razorpay, Twilio, Mail, H2/MySQL  </p>
+<p>Frontend: React 19, Vite, React Router, Recharts, STOMP/SockJS, jsPDF, html2canvas  </p>
+<p>Generated date: 2026-06-06</p>
+<div class="pagebreak"></div>
+<h2>Table of Contents</h2>
+<p>1. Executive Summary</p>
+<p>2. Technical Architecture</p>
+<p>3. Technology Stack Explanation</p>
+<p>4. Folder Structure Explanation</p>
+<p>5. Complete Function Documentation</p>
+<p>6. Database Documentation</p>
+<p>7. REST API Documentation</p>
+<p>8. Security Features</p>
+<p>9. Feature-Wise Explanation</p>
+<p>10. Viva Questions and Answers</p>
+<p>11. HR Interview Questions</p>
+<p>12. Project Presentation Slides</p>
+<p>13. Resume Description</p>
+<p>14. Interview Cheat Sheet</p>
+<p>15. PDF Formatting Guide</p>
+<div class="pagebreak"></div>
+<h2>1. Executive Summary</h2>
+<h3>1.1 Project Overview</h3>
+<p>PayFlow is a full-stack digital wallet and payment platform. It allows users to register, log in, manage wallet balance, send money, request money, split payments, schedule recurring payments, pay bills, claim rewards, manage linked bank accounts, generate QR codes, export statements, and receive real-time notifications. The backend exposes secured REST APIs through Spring Boot, while the frontend provides a React-based user interface.</p>
+<h3>1.2 Problem Statement</h3>
+<p>Users need a secure and convenient way to perform small digital payments, wallet transfers, payment requests, bill payments, and financial tracking from one place. Traditional manual transfers lack unified transaction history, fraud indicators, real-time updates, QR flows, rewards, and student-friendly explainability.</p>
+<h3>1.3 Existing System</h3>
+<p>Existing payment systems often work as isolated modules: bank apps handle bank transfers, wallet apps manage stored balance, and spreadsheet/manual records track expenses. Some systems provide only basic send/receive features and do not expose educational architecture, admin controls, or project-level extensibility.</p>
+<h3>1.4 Drawbacks of Existing System</h3>
+<ul>
+<li>Users must switch between different tools for wallet, bank, request, rewards, and analytics workflows.</li>
+<li>Manual tracking makes transaction search and category analysis difficult.</li>
+<li>Many basic systems do not support real-time notifications.</li>
+<li>Refund, fraud-risk preview, split payments, and scheduled payments are often absent.</li>
+<li>Admin monitoring and user blocking are missing in simple wallet projects.</li>
+</ul>
+<h3>1.5 Proposed System</h3>
+<p>PayFlow provides one integrated wallet platform with authentication, JWT security, transaction PIN protection, wallet balance management, transaction history, fraud-risk preview, bill payments, money requests, split payments, scheduled payments, QR code payments, rewards, referral benefits, notifications, and an admin panel.</p>
+<h3>1.6 Objectives</h3>
+<ul>
+<li>Build a secure digital wallet using Spring Boot and React.</li>
+<li>Provide REST APIs for users, wallet, transactions, requests, rewards, bank accounts, and admin actions.</li>
+<li>Persist data using JPA entities and H2/MySQL databases.</li>
+<li>Protect APIs with JWT, BCrypt password hashing, role-based access, and transaction PIN checks.</li>
+<li>Deliver a responsive frontend with protected routes and real-time WebSocket notifications.</li>
+<li>Provide analytics, PDF/CSV exports, and presentation-ready transaction visibility.</li>
+</ul>
+<h3>1.7 Scope of Project</h3>
+<p>The system covers user registration, login, wallet balance, money transfer, request money, scheduled payments, split payments, rewards, referrals, QR generation, bill payments, linked bank accounts, favorite contacts, feedback, notifications, and admin monitoring. It is suitable as a college-level or internship-level full-stack project and can be extended toward production fintech features.</p>
+<h3>1.8 Benefits</h3>
+<ul>
+<li>Unified payment and wallet workflows.</li>
+<li>Real-time notification and balance updates.</li>
+<li>Stronger security through JWT, BCrypt, role checks, rate limiting, and PIN verification.</li>
+<li>Modular backend architecture using controller, service, repository, model, DTO, config, and security layers.</li>
+<li>Interview-friendly technology coverage across Java, Spring Boot, React, REST APIs, database design, security, and system design.</li>
+</ul>
+<h3>1.9 Future Enhancements</h3>
+<ul>
+<li>Add actual bank payout settlement and UPI integration.</li>
+<li>Add ledger-based double-entry accounting for stronger financial consistency.</li>
+<li>Add KYC and document verification.</li>
+<li>Add device fingerprinting and machine-learning fraud detection.</li>
+<li>Add automated scheduled-payment executor jobs.</li>
+<li>Add refresh-token persistence and token revocation lists.</li>
+<li>Add production observability through logs, metrics, tracing, and alerting.</li>
+<li>Add end-to-end tests for critical payment flows.</li>
+</ul>
+<div class="pagebreak"></div>
+<h2>2. Technical Architecture</h2>
+<h3>2.1 System Architecture</h3>
+<p>```mermaid</p>
+<p>flowchart LR</p>
+<p>    U[User Browser] --&gt; FE[React 19 + Vite Frontend]</p>
+<p>    FE --&gt;|REST JSON + JWT| API[Spring Boot REST API]</p>
+<p>    FE --&gt;|SockJS/STOMP| WS[Spring WebSocket Endpoint /ws]</p>
+<p>    API --&gt; SEC[Spring Security + JwtFilter + RateLimitFilter]</p>
+<p>    SEC --&gt; SVC[Service Layer]</p>
+<p>    SVC --&gt; REPO[Spring Data JPA Repositories]</p>
+<p>    REPO --&gt; DB[(H2 Local / MySQL Production)]</p>
+<p>    SVC --&gt; RZ[Razorpay API]</p>
+<p>    SVC --&gt; TW[Twilio API]</p>
+<p>    SVC --&gt; SMTP[SMTP Mail Server]</p>
+<p>    SVC --&gt; WS</p>
+<p>```</p>
+<h3>2.2 High-Level Design</h3>
+<p>The frontend handles routing, forms, protected pages, local token storage, API calls, visual analytics, QR scanning, and document exports. The backend handles validation, authentication, authorization, business rules, transaction creation, wallet balance updates, notifications, persistence, and third-party integrations.</p>
+<h3>2.3 Low-Level Design</h3>
+<p>```mermaid</p>
+<p>flowchart TD</p>
+<p>    C[Controller] --&gt;|Request DTO / Map body| V[Validation and Auth Checks]</p>
+<p>    V --&gt; S[Service Method]</p>
+<p>    S --&gt; R[Repository Query]</p>
+<p>    R --&gt; E[JPA Entity]</p>
+<p>    S --&gt; B[Business Rule: balance, PIN, status, fraud, reward]</p>
+<p>    B --&gt; P[Persist Transaction/User/Notification]</p>
+<p>    P --&gt; N[WebSocket Notification]</p>
+<p>    N --&gt; Res[ResponseEntity JSON]</p>
+<p>```</p>
+<h3>2.4 Workflow Diagram: Send Money</h3>
+<p>```mermaid</p>
+<p>sequenceDiagram</p>
+<p>    participant User</p>
+<p>    participant React</p>
+<p>    participant API</p>
+<p>    participant Security</p>
+<p>    participant TxService</p>
+<p>    participant DB</p>
+<p>    participant WS</p>
+<p>    User-&gt;&gt;React: Enter receiver, amount, PIN</p>
+<p>    React-&gt;&gt;API: POST /transaction/send with JWT</p>
+<p>    API-&gt;&gt;Security: Validate JWT and authenticated user</p>
+<p>    API-&gt;&gt;TxService: sendMoney(sender, receiver, amount)</p>
+<p>    TxService-&gt;&gt;DB: Load sender and receiver</p>
+<p>    TxService-&gt;&gt;TxService: Validate balance, frozen status, fraud risk</p>
+<p>    TxService-&gt;&gt;DB: Update balances and save transaction</p>
+<p>    TxService-&gt;&gt;WS: Send notification/balance update</p>
+<p>    API--&gt;&gt;React: Success response with transaction</p>
+<p>    React--&gt;&gt;User: Show updated balance and receipt option</p>
+<p>```</p>
+<h3>2.5 Data Flow Diagram</h3>
+<p>```mermaid</p>
+<p>flowchart LR</p>
+<p>    User((User)) --&gt; FE[Frontend UI]</p>
+<p>    FE --&gt; Auth[Auth APIs]</p>
+<p>    FE --&gt; Wallet[Wallet APIs]</p>
+<p>    FE --&gt; Tx[Transaction APIs]</p>
+<p>    FE --&gt; Req[Request/Split/Schedule APIs]</p>
+<p>    Auth --&gt; UserStore[(app_user)]</p>
+<p>    Wallet --&gt; UserStore</p>
+<p>    Wallet --&gt; TxStore[(transaction)]</p>
+<p>    Tx --&gt; TxStore</p>
+<p>    Req --&gt; RequestStore[(money_request / split_payment / scheduled_payment)]</p>
+<p>    Tx --&gt; Notify[(notification)]</p>
+<p>    Wallet --&gt; Bank[(bank_account)]</p>
+<p>    Notify --&gt; FE</p>
+<p>```</p>
+<h3>2.6 ER Diagram</h3>
+<p>```mermaid</p>
+<p>erDiagram</p>
+<p>    APP_USER ||--o{ TRANSACTION : sends_or_receives</p>
+<p>    APP_USER ||--o{ BANK_ACCOUNT : owns</p>
+<p>    APP_USER ||--o{ NOTIFICATION : receives</p>
+<p>    APP_USER ||--o{ MONEY_REQUEST : requester_or_target</p>
+<p>    APP_USER ||--o{ FAVORITE_CONTACT : owner</p>
+<p>    APP_USER ||--o{ REWARD : earns</p>
+<p>    APP_USER ||--o{ SCHEDULED_PAYMENT : schedules</p>
+<p>    APP_USER ||--o{ SPLIT_PAYMENT : creates</p>
+<p>    SPLIT_PAYMENT ||--o{ SPLIT_PARTICIPANT : contains</p>
+<p>    OTP_RECORD }o--|| APP_USER : verifies_identifier</p>
+<p>    FEEDBACK }o--o| APP_USER : optional_user_feedback</p>
+<p>```</p>
+<h3>2.7 API Architecture</h3>
+<p>APIs are grouped by domain: <code>/user</code>, <code>/wallet</code>, <code>/transaction</code>, <code>/bank</code>, <code>/contacts</code>, <code>/request-money</code>, <code>/split</code>, <code>/scheduled-payments</code>, <code>/bill-payments</code>, <code>/rewards</code>, <code>/referral</code>, <code>/qr</code>, <code>/notifications</code>, <code>/api/feedback</code>, <code>/admin</code>, <code>/otp</code>, and <code>/api/email-otp</code>.</p>
+<h3>2.8 Frontend Architecture</h3>
+<p>React uses page components for each workflow, context providers for authentication, theme, language, and WebSocket state, a central <code>apiFetch</code> helper for JWT-aware requests, shared components such as <code>Layout</code>, <code>Toast</code>, <code>PinModal</code>, and <code>UserAvatar</code>, and utility modules for PDF/CSV statement generation.</p>
+<h3>2.9 Backend Architecture</h3>
+<p>The backend follows a layered Spring Boot structure:</p>
+<ul>
+<li>Controller layer receives HTTP requests and maps endpoints.</li>
+<li>Service layer contains business logic.</li>
+<li>Repository layer performs database access through Spring Data JPA.</li>
+<li>Model layer defines persisted JPA entities.</li>
+<li>DTO layer defines structured request payloads.</li>
+<li>Security layer handles JWT parsing, authentication, authorization, BCrypt, and rate limiting.</li>
+<li>Config layer handles CORS and WebSocket/STOMP setup.</li>
+</ul>
+<div class="pagebreak"></div>
+<h2>3. Technology Stack Explanation</h2>
+<table><tbody>
+<tr><th>Technology</th><th>Definition</th><th>Why Used</th><th>Advantages</th><th>Alternatives</th><th>Interview Questions</th></tr>
+<tr><td>Java 17</td><td>Object-oriented backend language</td><td>Stable enterprise backend development</td><td>Strong typing, JVM ecosystem, mature tooling</td><td>Kotlin, C#, Node.js</td><td>Why Java for payment systems? What are records, streams, exceptions?</td></tr>
+<tr><td>Spring Boot</td><td>Java application framework</td><td>Rapid REST API development</td><td>Auto-configuration, embedded server, dependency injection</td><td>Micronaut, Quarkus, Express</td><td>What is auto-configuration? What is dependency injection?</td></tr>
+<tr><td>Spring Web MVC</td><td>REST controller framework</td><td>Exposes HTTP endpoints</td><td>Annotation-based routing, JSON binding</td><td>JAX-RS, Express</td><td>Difference between <code>@Controller</code> and <code>@RestController</code>?</td></tr>
+<tr><td>Spring Security</td><td>Authentication and authorization framework</td><td>Protects APIs</td><td>Filter chain, role checks, BCrypt integration</td><td>Apache Shiro, custom filters</td><td>How does Spring Security filter chain work?</td></tr>
+<tr><td>JWT</td><td>Signed token format</td><td>Stateless API authentication</td><td>Scalable, frontend-friendly, carries claims</td><td>Sessions, OAuth opaque tokens</td><td>What are JWT header, payload, signature?</td></tr>
+<tr><td>BCrypt</td><td>Password hashing algorithm</td><td>Secure password/PIN storage</td><td>Salted, slow hash, brute-force resistant</td><td>Argon2, PBKDF2</td><td>Why not store plain passwords?</td></tr>
+<tr><td>Spring Data JPA</td><td>ORM repository abstraction</td><td>Simplifies database access</td><td>Less boilerplate, derived queries, entity mapping</td><td>JDBC, MyBatis</td><td>What is JPA? What is Hibernate?</td></tr>
+<tr><td>Hibernate</td><td>JPA implementation</td><td>Entity persistence and schema updates</td><td>ORM, lazy loading, dialect support</td><td>EclipseLink</td><td>What is lazy vs eager loading?</td></tr>
+<tr><td>H2</td><td>Embedded database</td><td>Local development and tests</td><td>Easy setup, file/in-memory modes</td><td>SQLite, Derby</td><td>Why use H2 locally?</td></tr>
+<tr><td>MySQL</td><td>Relational database</td><td>Production persistence</td><td>ACID, indexing, reliability</td><td>PostgreSQL, MariaDB</td><td>What are primary and foreign keys?</td></tr>
+<tr><td>React 19</td><td>Frontend UI library</td><td>Component-based SPA</td><td>Reusable components, state model, ecosystem</td><td>Angular, Vue, Svelte</td><td>What are hooks? What is virtual DOM?</td></tr>
+<tr><td>Vite</td><td>Frontend build tool</td><td>Fast development server and bundling</td><td>Quick HMR, simple config</td><td>Webpack, Parcel</td><td>Why Vite over Webpack?</td></tr>
+<tr><td>React Router</td><td>Client-side routing</td><td>Page navigation and protected routes</td><td>Declarative routes, nested layouts</td><td>TanStack Router</td><td>How do protected routes work?</td></tr>
+<tr><td>Recharts</td><td>Charting library</td><td>Analytics dashboard</td><td>React-native chart components</td><td>Chart.js, D3</td><td>How do you visualize transaction data?</td></tr>
+<tr><td>WebSocket/STOMP</td><td>Real-time messaging</td><td>Notifications and balance updates</td><td>Low-latency push updates</td><td>SSE, polling</td><td>Why WebSocket instead of polling?</td></tr>
+<tr><td>SockJS</td><td>WebSocket fallback library</td><td>Browser compatibility</td><td>Works when native WS is unavailable</td><td>Native WebSocket</td><td>What is SockJS fallback behavior?</td></tr>
+<tr><td>Razorpay</td><td>Payment gateway SDK</td><td>Wallet top-up order and verification</td><td>Real payment integration, webhooks</td><td>Stripe, PayPal</td><td>How do payment signatures prevent tampering?</td></tr>
+<tr><td>Twilio</td><td>Communication API</td><td>OTP/SMS capability</td><td>Reliable SMS integration</td><td>Firebase Auth, AWS SNS</td><td>How would OTP expiry be handled?</td></tr>
+<tr><td>Spring Mail</td><td>Email integration</td><td>Email OTP and password reset</td><td>SMTP support, simple API</td><td>SendGrid, Mailgun</td><td>How do you secure email credentials?</td></tr>
+<tr><td>ZXing</td><td>QR generation library</td><td>Payment QR creation</td><td>Mature barcode/QR generation</td><td>QRGen</td><td>What data should a payment QR contain?</td></tr>
+<tr><td>Bucket4j</td><td>Rate limiting library</td><td>Blocks request abuse</td><td>Token bucket algorithm, filter integration</td><td>Redis rate limiter, Resilience4j</td><td>Explain token bucket rate limiting.</td></tr>
+<tr><td>Maven</td><td>Java build tool</td><td>Dependency and build management</td><td>Standard lifecycle, reproducible builds</td><td>Gradle</td><td>What is <code>pom.xml</code>?</td></tr>
+<tr><td>npm</td><td>JavaScript package manager</td><td>Frontend dependency management</td><td>Large ecosystem, script runner</td><td>pnpm, Yarn</td><td>What is <code>package-lock.json</code>?</td></tr>
+<tr><td>Docker</td><td>Container platform</td><td>Deployment packaging</td><td>Portable runtime, consistent environments</td><td>Buildpacks, VM images</td><td>Why containerize backend?</td></tr>
+<tr><td>Git/GitHub</td><td>Version control and collaboration</td><td>Source history and hosting</td><td>Branching, PRs, CI/CD</td><td>GitLab, Bitbucket</td><td>What is a commit, branch, and pull request?</td></tr>
+</tbody></table>
+<div class="pagebreak"></div>
+<h2>4. Folder Structure Explanation</h2>
+<p>```text</p>
+<p>PayFlow/</p>
+<p>|-- frontend/</p>
+<p>|   |-- src/</p>
+<p>|   |   |-- pages/</p>
+<p>|   |   |-- components/</p>
+<p>|   |   |-- context/</p>
+<p>|   |   |-- utils/</p>
+<p>|   |   |-- api.js</p>
+<p>|   |   |-- App.jsx</p>
+<p>|   |   `-- main.jsx</p>
+<p>|   |-- package.json</p>
+<p>|   |-- vite.config.js</p>
+<p>|   `-- vercel.json</p>
+<p>|-- demo/</p>
+<p>|   |-- src/main/java/payment_system_backend/</p>
+<p>|   |   |-- controller/</p>
+<p>|   |   |-- service/</p>
+<p>|   |   |-- repository/</p>
+<p>|   |   |-- model/</p>
+<p>|   |   |-- dto/</p>
+<p>|   |   |-- security/</p>
+<p>|   |   |-- config/</p>
+<p>|   |   `-- PaymentSystemBackendApplication.java</p>
+<p>|   |-- src/main/resources/</p>
+<p>|   |-- src/test/java/</p>
+<p>|   |-- pom.xml</p>
+<p>|   `-- Dockerfile</p>
+<p>|-- README.md</p>
+<p>|-- DEPLOYMENT.md</p>
+<p>|-- Dockerfile</p>
+<p>|-- railway.json</p>
+<p>`-- .env.example</p>
+<p>```</p>
+<table><tbody>
+<tr><th>Path</th><th>Purpose</th></tr>
+<tr><td><code>frontend/src/pages</code></td><td>Feature screens: dashboard, login, transactions, send money, settings, QR, admin, etc.</td></tr>
+<tr><td><code>frontend/src/components</code></td><td>Shared UI components such as layout shell, toast, avatar, and PIN modal.</td></tr>
+<tr><td><code>frontend/src/context</code></td><td>React context providers for authentication, theme, language, and WebSocket state.</td></tr>
+<tr><td><code>frontend/src/utils</code></td><td>Export utilities for transaction receipts and statements.</td></tr>
+<tr><td><code>frontend/src/api.js</code></td><td>Central API helper with token attachment and refresh retry.</td></tr>
+<tr><td><code>frontend/package.json</code></td><td>Frontend scripts and dependency manifest.</td></tr>
+<tr><td><code>demo/src/main/java/.../controller</code></td><td>REST endpoint classes.</td></tr>
+<tr><td><code>demo/src/main/java/.../service</code></td><td>Business logic classes.</td></tr>
+<tr><td><code>demo/src/main/java/.../repository</code></td><td>Spring Data JPA repository interfaces.</td></tr>
+<tr><td><code>demo/src/main/java/.../model</code></td><td>JPA entities mapped to database tables.</td></tr>
+<tr><td><code>demo/src/main/java/.../dto</code></td><td>Request payload classes.</td></tr>
+<tr><td><code>demo/src/main/java/.../security</code></td><td>JWT utilities, security filter, rate limiter, and security configuration.</td></tr>
+<tr><td><code>demo/src/main/java/.../config</code></td><td>CORS and WebSocket configuration.</td></tr>
+<tr><td><code>demo/src/main/resources/application.properties</code></td><td>Main backend configuration and environment variable mappings.</td></tr>
+<tr><td><code>demo/src/main/resources/application-local.properties</code></td><td>Local H2 profile settings.</td></tr>
+<tr><td><code>demo/src/main/resources/application-mysql.properties</code></td><td>Production MySQL profile settings.</td></tr>
+<tr><td><code>demo/pom.xml</code></td><td>Backend dependencies and build configuration.</td></tr>
+<tr><td><code>.env.example</code></td><td>Required environment variables for deployment.</td></tr>
+</tbody></table>
+<div class="pagebreak"></div>
+<h2>5. Complete Function Documentation</h2>
+<p>This project contains many Java accessors and React inline handlers. For viva and interview use, the important functions are grouped by business behavior. Getter/setter methods in DTOs and entities are O(1), return or assign a single field, and have edge cases limited to null/invalid caller values unless validation is applied by controllers/services.</p>
+<h3>5.1 Backend Controller Method Catalog</h3>
+<table><tbody>
+<tr><th>Class</th><th>Function</th><th>Purpose</th><th>Complexity</th><th>Key Edge Cases</th></tr>
+<tr><td><code>UserController</code></td><td><code>registerUser</code></td><td>Create user account</td><td>O(1) plus DB</td><td>Duplicate email/phone, weak password, missing fields</td></tr>
+<tr><td><code>UserController</code></td><td><code>login</code></td><td>Authenticate and return tokens</td><td>O(1) plus DB/hash</td><td>Wrong password, blocked user, email/phone login ambiguity</td></tr>
+<tr><td><code>UserController</code></td><td><code>refresh</code></td><td>Issue new access token</td><td>O(1)</td><td>Missing/expired refresh token</td></tr>
+<tr><td><code>UserController</code></td><td><code>getUserById</code></td><td>Fetch user details</td><td>O(1) plus DB</td><td>User not found</td></tr>
+<tr><td><code>UserController</code></td><td><code>deleteUser</code></td><td>Delete user</td><td>O(1) plus DB</td><td>User not found, related data</td></tr>
+<tr><td><code>UserController</code></td><td><code>updateProfilePicture</code></td><td>Save profile picture URL/data</td><td>O(1)</td><td>Empty image, large payload</td></tr>
+<tr><td><code>UserController</code></td><td><code>pinStatus</code></td><td>Check whether PIN exists</td><td>O(1)</td><td>Unauthenticated user</td></tr>
+<tr><td><code>UserController</code></td><td><code>setTransactionPin</code></td><td>Create/update PIN with BCrypt</td><td>O(1) plus hash</td><td>PIN length, mismatch, wrong old PIN</td></tr>
+<tr><td><code>UserController</code></td><td><code>checkBalance</code></td><td>Verify PIN and return balance</td><td>O(1)</td><td>Missing PIN, wrong PIN</td></tr>
+<tr><td><code>UserController</code></td><td><code>sendForgotPasswordOtp</code></td><td>Send reset OTP</td><td>O(1) plus mail</td><td>Unknown email, mail failure</td></tr>
+<tr><td><code>UserController</code></td><td><code>resetPassword</code></td><td>Verify OTP and update password</td><td>O(1) plus hash</td><td>Expired OTP, weak password</td></tr>
+<tr><td><code>UserController</code></td><td><code>makeAdmin</code></td><td>Promote a user</td><td>O(1)</td><td>Unauthorized caller</td></tr>
+<tr><td><code>WalletController</code></td><td><code>addMoney</code></td><td>Add wallet balance</td><td>O(1)</td><td>Invalid amount, wrong PIN</td></tr>
+<tr><td><code>WalletController</code></td><td><code>createPaymentOrder</code></td><td>Create Razorpay order</td><td>O(1) plus gateway</td><td>Invalid amount, gateway credentials missing</td></tr>
+<tr><td><code>WalletController</code></td><td><code>verifyPayment</code></td><td>Verify Razorpay signature and credit wallet</td><td>O(1) plus gateway/DB</td><td>Invalid signature, duplicate order</td></tr>
+<tr><td><code>WalletController</code></td><td><code>withdrawToBank</code></td><td>Withdraw wallet balance</td><td>O(1)</td><td>Insufficient balance, invalid bank account</td></tr>
+<tr><td><code>WalletController</code></td><td><code>razorpayWebhook</code></td><td>Receive payment gateway event</td><td>O(1)</td><td>Invalid webhook signature</td></tr>
+<tr><td><code>TransactionController</code></td><td><code>sendMoney</code></td><td>Transfer wallet amount between users</td><td>O(1) plus DB</td><td>Self transfer, frozen account, insufficient balance</td></tr>
+<tr><td><code>TransactionController</code></td><td><code>riskPreview</code></td><td>Estimate fraud risk before transfer</td><td>O(n) over recent history</td><td>Unknown receiver, abnormal amount</td></tr>
+<tr><td><code>TransactionController</code></td><td><code>history</code></td><td>List user transactions</td><td>O(n)</td><td>Invalid date/status filters</td></tr>
+<tr><td><code>TransactionController</code></td><td><code>searchHistory</code></td><td>Search/filter transactions</td><td>O(n)</td><td>Empty query, bad date</td></tr>
+<tr><td><code>TransactionController</code></td><td><code>requestRefund</code></td><td>Mark refund request pending</td><td>O(1)</td><td>Already refunded, unauthorized requester</td></tr>
+<tr><td><code>TransactionController</code></td><td><code>retryPayment</code></td><td>Retry failed transaction</td><td>O(1)</td><td>Transaction not failed</td></tr>
+<tr><td><code>TransactionController</code></td><td><code>analytics</code></td><td>Return aggregate analytics</td><td>O(n)</td><td>Empty history, invalid period</td></tr>
+<tr><td><code>BankAccountController</code></td><td><code>getAccounts</code></td><td>List linked bank accounts</td><td>O(n)</td><td>User has no accounts</td></tr>
+<tr><td><code>BankAccountController</code></td><td><code>addAccount</code></td><td>Add masked bank account</td><td>O(1)</td><td>Account mismatch, invalid IFSC, duplicates</td></tr>
+<tr><td><code>BankAccountController</code></td><td><code>removeAccount</code></td><td>Delete linked account</td><td>O(1)</td><td>Account not found</td></tr>
+<tr><td><code>BankAccountController</code></td><td><code>setPrimary</code></td><td>Mark account as primary</td><td>O(n)</td><td>Account belongs to another user</td></tr>
+<tr><td><code>MoneyRequestController</code></td><td><code>create</code></td><td>Create money request</td><td>O(1)</td><td>Self request, invalid amount</td></tr>
+<tr><td><code>MoneyRequestController</code></td><td><code>accept</code></td><td>Pay accepted request</td><td>O(1)</td><td>Wrong PIN, insufficient balance</td></tr>
+<tr><td><code>MoneyRequestController</code></td><td><code>decline</code></td><td>Decline incoming request</td><td>O(1)</td><td>Not target user</td></tr>
+<tr><td><code>MoneyRequestController</code></td><td><code>cancel</code></td><td>Cancel outgoing request</td><td>O(1)</td><td>Not requester</td></tr>
+<tr><td><code>SplitPaymentController</code></td><td><code>createSplit</code></td><td>Create split group and participants</td><td>O(p)</td><td>Invalid participants, duplicate participants</td></tr>
+<tr><td><code>SplitPaymentController</code></td><td><code>payShare</code></td><td>Mark participant share paid</td><td>O(p)</td><td>Already paid, user not participant</td></tr>
+<tr><td><code>ScheduledPaymentController</code></td><td><code>create</code></td><td>Store recurring payment definition</td><td>O(1)</td><td>Invalid date/frequency/PIN</td></tr>
+<tr><td><code>ScheduledPaymentController</code></td><td><code>updateStatus</code></td><td>Pause/resume/cancel schedule</td><td>O(1)</td><td>Unauthorized owner, invalid status</td></tr>
+<tr><td><code>BillPaymentController</code></td><td><code>payBill</code></td><td>Pay bill and record transaction</td><td>O(1)</td><td>Invalid provider/account, low balance</td></tr>
+<tr><td><code>RewardController</code></td><td><code>getRewards</code></td><td>Return reward summary</td><td>O(n)</td><td>No rewards</td></tr>
+<tr><td><code>RewardController</code></td><td><code>claimDailyBonus</code></td><td>Add daily bonus once per day</td><td>O(n)</td><td>Already claimed</td></tr>
+<tr><td><code>ReferralController</code></td><td><code>getReferralCode</code></td><td>Return/generate referral code</td><td>O(1)</td><td>User not found</td></tr>
+<tr><td><code>ReferralController</code></td><td><code>claimReferral</code></td><td>Grant referral rewards</td><td>O(1)</td><td>Self referral, duplicate claim</td></tr>
+<tr><td><code>QrController</code></td><td><code>generateQr</code></td><td>Generate PNG QR code</td><td>O(w*h)</td><td>Unknown user, QR encoding error</td></tr>
+<tr><td><code>NotificationController</code></td><td><code>getNotifications</code></td><td>List notifications</td><td>O(n)</td><td>No notifications</td></tr>
+<tr><td><code>NotificationController</code></td><td><code>markRead</code></td><td>Mark one notification read</td><td>O(1)</td><td>Notification not found</td></tr>
+<tr><td><code>AdminController</code></td><td><code>getStats</code></td><td>Return admin dashboard metrics</td><td>O(n)</td><td>Unauthorized access</td></tr>
+<tr><td><code>AdminController</code></td><td><code>blockUser</code>/<code>unblockUser</code></td><td>Freeze or unfreeze account</td><td>O(1)</td><td>User not found</td></tr>
+<tr><td><code>AdminController</code></td><td><code>approveRefund</code>/<code>rejectRefund</code></td><td>Resolve refund request</td><td>O(1)</td><td>Non-pending refund</td></tr>
+</tbody></table>
+<h3>5.2 Backend Service Method Catalog</h3>
+<table><tbody>
+<tr><th>Service</th><th>Important Functions</th><th>Responsibility</th></tr>
+<tr><td><code>UserService</code></td><td>create, fetch, delete user operations</td><td>User persistence and account workflow support</td></tr>
+<tr><td><code>WalletService</code></td><td>add money, withdrawal support</td><td>Balance mutation and wallet transaction creation</td></tr>
+<tr><td><code>TransactionService</code></td><td>transfer, refund, retry, history</td><td>Core money movement and transaction lifecycle</td></tr>
+<tr><td><code>FraudDetectionService</code></td><td>risk scoring and level calculation</td><td>Detect high-risk amounts, frequency, and unusual activity</td></tr>
+<tr><td><code>PaymentGatewayService</code></td><td>order creation, signature verification, webhook verification</td><td>Razorpay integration boundary</td></tr>
+<tr><td><code>OtpService</code></td><td>generate, store, verify OTP</td><td>OTP lifecycle for registration/login/password reset</td></tr>
+<tr><td><code>NotificationService</code></td><td>create notification, push over WebSocket</td><td>Real-time and persisted notification delivery</td></tr>
+<tr><td><code>RewardService</code></td><td>add transaction reward, daily bonus, referral reward</td><td>User points and reward history</td></tr>
+<tr><td><code>MoneyRequestService</code></td><td>create/accept/decline/cancel request</td><td>Request-money domain workflow</td></tr>
+<tr><td><code>SplitPaymentService</code></td><td>create split, pay share, list splits</td><td>Split payment group workflow</td></tr>
+<tr><td><code>ScheduledPaymentService</code></td><td>create, list, update, delete schedule</td><td>Recurring payment metadata workflow</td></tr>
+<tr><td><code>BillPaymentService</code></td><td><code>payBill</code>, <code>buildDescription</code></td><td>Bill payment transaction and cashback/points</td></tr>
+<tr><td><code>AdminService</code></td><td>stats, block/unblock, refund review</td><td>Admin operations and reporting</td></tr>
+<tr><td><code>FeedbackService</code></td><td>save feedback</td><td>Public feedback capture</td></tr>
+</tbody></table>
+<h3>5.3 Frontend Function Catalog</h3>
+<table><tbody>
+<tr><th>File</th><th>Functions</th><th>Purpose</th></tr>
+<tr><td><code>src/api.js</code></td><td><code>apiFetch</code>, <code>tryRefreshToken</code></td><td>Attach JWT, retry expired token with refresh flow</td></tr>
+<tr><td><code>App.jsx</code></td><td><code>PrivateRoute</code>, <code>AdminRoute</code>, <code>PublicRoute</code>, <code>App</code></td><td>Route protection and app routing</td></tr>
+<tr><td><code>AuthContext.jsx</code></td><td><code>login</code>, <code>logout</code>, <code>updateUser</code>, <code>refreshUser</code>, <code>useAuth</code></td><td>Store and update authenticated user/session</td></tr>
+<tr><td><code>WebSocketContext.jsx</code></td><td><code>connect</code>, subscriptions, <code>useWebSocket</code></td><td>Subscribe to notification and balance channels</td></tr>
+<tr><td><code>ThemeContext.jsx</code></td><td><code>changeTheme</code>, <code>useTheme</code></td><td>Theme persistence</td></tr>
+<tr><td><code>LanguageContext.jsx</code></td><td><code>changeLanguage</code>, <code>t</code>, <code>useLanguage</code></td><td>Simple translation dictionary</td></tr>
+<tr><td><code>Dashboard.jsx</code></td><td>balance loaders, add money, withdraw, claim reward</td><td>Main wallet dashboard</td></tr>
+<tr><td><code>SendMoney.jsx</code></td><td>recipient lookup, fraud preview, PIN submit, send</td><td>Transfer workflow</td></tr>
+<tr><td><code>RequestMoney.jsx</code></td><td>fetch incoming/outgoing, create, accept, decline, cancel</td><td>Money request workflow</td></tr>
+<tr><td><code>Transactions.jsx</code></td><td>filtering, summary, export actions</td><td>Transaction history view</td></tr>
+<tr><td><code>Analytics.jsx</code></td><td>chart data loading, tab/period selection</td><td>Spending analytics</td></tr>
+<tr><td><code>Settings.jsx</code></td><td>profile, PIN, bank accounts, contacts, theme/language</td><td>Account settings</td></tr>
+<tr><td><code>QRPage.jsx</code></td><td>scan QR, upload QR, download/share QR</td><td>QR workflow</td></tr>
+<tr><td><code>SplitPayment.jsx</code></td><td>load splits, add participants, create, pay</td><td>Split payment workflow</td></tr>
+<tr><td><code>ScheduledPayments.jsx</code></td><td>build payload, create, update status, delete</td><td>Scheduled payment workflow</td></tr>
+<tr><td><code>BillPayments.jsx</code></td><td>bill type selection, cashback preview, submit</td><td>Bill payment workflow</td></tr>
+<tr><td><code>AdminPanel.jsx</code></td><td>stats/users/refund loading, block/unblock, approve/reject</td><td>Admin dashboard</td></tr>
+<tr><td><code>generateReceipt.js</code></td><td><code>generateReceipt</code></td><td>Create transaction receipt PDF</td></tr>
+<tr><td><code>exportStatement.js</code></td><td><code>exportTransactionsCsv</code>, <code>exportTransactionsPdf</code></td><td>Export transaction statement</td></tr>
+</tbody></table>
+<h3>5.4 Detailed Function Documentation: <code>TransactionController.sendMoney</code></h3>
+<p>Purpose: Transfers money from the authenticated sender to a receiver and records the transaction.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>body</code>: request map containing receiver identifier, amount, description/category, and transaction PIN.</li>
+<li><code>authentication</code>: Spring Security authentication object representing the logged-in user.</li>
+</ul>
+<p>Return type: <code>ResponseEntity&lt;Map&lt;String, Object&gt;&gt;</code> with success/failure message, transaction data, and updated balance.</p>
+<p>Business logic:</p>
+<p>1. Read current user from JWT authentication.</p>
+<p>2. Validate sender is active and transaction PIN is correct.</p>
+<p>3. Parse receiver and amount from request.</p>
+<p>4. Check receiver exists and is not the sender.</p>
+<p>5. Preview fraud risk and validate balance.</p>
+<p>6. Delegate transfer to service/repository logic.</p>
+<p>7. Award reward points if applicable.</p>
+<p>8. Send notifications and balance updates.</p>
+<p>9. Return response.</p>
+<p>Time complexity: O(1) for normal transfer operations, plus O(n) if risk preview scans recent history.  </p>
+<p>Space complexity: O(1).  </p>
+<p>Edge cases: insufficient balance, invalid PIN, negative amount, same sender/receiver, frozen account, receiver not found, fraud threshold failure.  </p>
+<p>Example input:</p>
+<p>```json</p>
+<p>{ &quot;receiverId&quot;: 2, &quot;amount&quot;: 500, &quot;transactionPin&quot;: &quot;123456&quot;, &quot;description&quot;: &quot;Lunch split&quot; }</p>
+<p>```</p>
+<p>Example output:</p>
+<p>```json</p>
+<p>{ &quot;message&quot;: &quot;Money sent successfully&quot;, &quot;balance&quot;: 1500.0, &quot;transactionId&quot;: 45 }</p>
+<p>```</p>
+<p>Possible interview questions:</p>
+<ul>
+<li>Why should transfer logic be transactional?</li>
+<li>How would you prevent race conditions during concurrent transfers?</li>
+<li>Why is transaction PIN separate from login password?</li>
+</ul>
+<p>Code walkthrough: The controller validates request/user context, delegates core payment rules to the transaction service, updates persistence through repositories, and returns a JSON response. In production, the debit/credit and transaction insert should be inside one database transaction.</p>
+<h3>5.5 Detailed Function Documentation: <code>apiFetch</code></h3>
+<p>Purpose: Provides a central frontend wrapper around <code>fetch</code> for API calls.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>path</code>: backend path such as <code>/user/login</code> or <code>/transaction/send</code>.</li>
+<li><code>options</code>: fetch options including method, headers, and body.</li>
+</ul>
+<p>Return type: <code>Promise&lt;Response&gt;</code>.</p>
+<p>Business logic:</p>
+<p>1. Read access token from local storage.</p>
+<p>2. Attach <code>Authorization: Bearer &lt;token&gt;</code> when available.</p>
+<p>3. Send request to configured API base URL.</p>
+<p>4. If response is unauthorized, attempt refresh-token flow.</p>
+<p>5. Retry original request with new access token.</p>
+<p>6. Return final response to caller.</p>
+<p>Time complexity: O(1).  </p>
+<p>Space complexity: O(1).  </p>
+<p>Edge cases: missing token, expired refresh token, backend offline, invalid JSON response, refresh retry loop.  </p>
+<p>Example input: <code>apiFetch(&#39;/transaction/history/1&#39;)</code>  </p>
+<p>Example output: HTTP response containing transaction array.  </p>
+<p>Interview questions:</p>
+<ul>
+<li>Why centralize API calls?</li>
+<li>How do you avoid infinite refresh retries?</li>
+<li>Where should tokens be stored for better security?</li>
+</ul>
+<div class="pagebreak"></div>
+<h2>6. Database Documentation</h2>
+<h3>6.1 Main Tables</h3>
+<table><tbody>
+<tr><th>Table</th><th>Purpose</th><th>Primary Key</th><th>Important Relationships</th></tr>
+<tr><td><code>app_user</code></td><td>Stores user account, balance, role, PIN, referral, profile</td><td><code>id</code></td><td>Referenced by user ID columns in transactions, rewards, notifications, requests</td></tr>
+<tr><td><code>transaction</code></td><td>Stores wallet transfers, bill payments, gateway top-ups, refunds</td><td><code>id</code></td><td><code>sender_id</code> and <code>receiver_id</code> refer logically to users</td></tr>
+<tr><td><code>bank_account</code></td><td>Stores linked bank account metadata</td><td><code>id</code></td><td>Belongs to <code>app_user</code> through <code>user_id</code></td></tr>
+<tr><td><code>notification</code></td><td>Stores user notifications</td><td><code>id</code></td><td>Belongs to user through <code>user_id</code></td></tr>
+<tr><td><code>money_request</code></td><td>Stores payment requests</td><td><code>id</code></td><td><code>requester_id</code> and <code>target_user_id</code> refer to users</td></tr>
+<tr><td><code>favorite_contact</code></td><td>Stores saved recipient contacts</td><td><code>id</code></td><td>Owner user and contact user</td></tr>
+<tr><td><code>reward</code></td><td>Stores reward point events</td><td><code>id</code></td><td>Belongs to user through <code>user_id</code></td></tr>
+<tr><td><code>scheduled_payment</code></td><td>Stores recurring payment setup</td><td><code>id</code></td><td>Sender and receiver user IDs</td></tr>
+<tr><td><code>split_payment</code></td><td>Stores split group header</td><td><code>id</code></td><td>Creator user ID</td></tr>
+<tr><td><code>split_participant</code></td><td>Stores split group participants</td><td><code>id</code></td><td>Many-to-one with <code>split_payment</code></td></tr>
+<tr><td><code>otp_records</code></td><td>Stores generated OTP values with creation time</td><td><code>id</code></td><td>Identifier maps to email/phone</td></tr>
+<tr><td><code>feedback</code></td><td>Stores public feedback submissions</td><td><code>id</code></td><td>Optional user association by email</td></tr>
+</tbody></table>
+<h3>6.2 SQL Schema Documentation</h3>
+<p>```sql</p>
+<p>CREATE TABLE app_user (</p>
+<p>  id BIGINT PRIMARY KEY AUTO_INCREMENT,</p>
+<p>  name VARCHAR(255),</p>
+<p>  email VARCHAR(255),</p>
+<p>  password VARCHAR(255),</p>
+<p>  balance DOUBLE NOT NULL,</p>
+<p>  account_age_days INT DEFAULT 0,</p>
+<p>  phone_number VARCHAR(255) UNIQUE,</p>
+<p>  profile_picture_url TEXT,</p>
+<p>  referral_code VARCHAR(255) UNIQUE,</p>
+<p>  referred_by VARCHAR(255),</p>
+<p>  role VARCHAR(20) DEFAULT &#39;USER&#39;,</p>
+<p>  frozen BOOLEAN DEFAULT FALSE,</p>
+<p>  transaction_pin VARCHAR(255),</p>
+<p>  last_login_at DATETIME</p>
+<p>);</p>
+<p>CREATE TABLE transaction (</p>
+<p>  id BIGINT PRIMARY KEY AUTO_INCREMENT,</p>
+<p>  sender_id BIGINT,</p>
+<p>  receiver_id BIGINT,</p>
+<p>  amount DOUBLE NOT NULL,</p>
+<p>  status VARCHAR(255),</p>
+<p>  time DATETIME,</p>
+<p>  risk_score DOUBLE DEFAULT 0,</p>
+<p>  risk_level VARCHAR(10) DEFAULT &#39;LOW&#39;,</p>
+<p>  category VARCHAR(30) DEFAULT &#39;TRANSFER&#39;,</p>
+<p>  description VARCHAR(255),</p>
+<p>  refund_status VARCHAR(20),</p>
+<p>  refund_requested_by BIGINT,</p>
+<p>  gateway_provider VARCHAR(30),</p>
+<p>  gateway_order_id VARCHAR(100) UNIQUE,</p>
+<p>  gateway_payment_id VARCHAR(100),</p>
+<p>  gateway_signature VARCHAR(255),</p>
+<p>  gateway_status VARCHAR(30),</p>
+<p>  failure_reason VARCHAR(255),</p>
+<p>  currency VARCHAR(3) DEFAULT &#39;INR&#39;</p>
+<p>);</p>
+<p>CREATE TABLE bank_account (</p>
+<p>  id BIGINT PRIMARY KEY AUTO_INCREMENT,</p>
+<p>  user_id BIGINT NOT NULL,</p>
+<p>  account_holder_name VARCHAR(255),</p>
+<p>  account_number VARCHAR(255),</p>
+<p>  account_number_full VARCHAR(255),</p>
+<p>  ifsc_code VARCHAR(255),</p>
+<p>  bank_name VARCHAR(255),</p>
+<p>  account_type VARCHAR(255),</p>
+<p>  is_primary BOOLEAN DEFAULT FALSE</p>
+<p>);</p>
+<p>CREATE TABLE notification (</p>
+<p>  id BIGINT PRIMARY KEY AUTO_INCREMENT,</p>
+<p>  user_id BIGINT NOT NULL,</p>
+<p>  title VARCHAR(100) NOT NULL,</p>
+<p>  message VARCHAR(500) NOT NULL,</p>
+<p>  type VARCHAR(20) DEFAULT &#39;INFO&#39;,</p>
+<p>  is_read BOOLEAN DEFAULT FALSE,</p>
+<p>  created_at DATETIME</p>
+<p>);</p>
+<p>CREATE TABLE money_request (</p>
+<p>  id BIGINT PRIMARY KEY AUTO_INCREMENT,</p>
+<p>  requester_id BIGINT NOT NULL,</p>
+<p>  target_user_id BIGINT NOT NULL,</p>
+<p>  amount DOUBLE NOT NULL,</p>
+<p>  description VARCHAR(255),</p>
+<p>  status VARCHAR(20) NOT NULL,</p>
+<p>  created_at DATETIME</p>
+<p>);</p>
+<p>CREATE TABLE split_payment (</p>
+<p>  id BIGINT PRIMARY KEY AUTO_INCREMENT,</p>
+<p>  title VARCHAR(100) NOT NULL,</p>
+<p>  total_amount DOUBLE NOT NULL,</p>
+<p>  creator_id BIGINT NOT NULL,</p>
+<p>  status VARCHAR(20) DEFAULT &#39;OPEN&#39;,</p>
+<p>  created_at DATETIME</p>
+<p>);</p>
+<p>CREATE TABLE split_participant (</p>
+<p>  id BIGINT PRIMARY KEY AUTO_INCREMENT,</p>
+<p>  split_payment_id BIGINT NOT NULL,</p>
+<p>  user_id BIGINT NOT NULL,</p>
+<p>  user_name VARCHAR(100),</p>
+<p>  profile_picture_url TEXT,</p>
+<p>  amount_owed DOUBLE NOT NULL,</p>
+<p>  amount_paid DOUBLE DEFAULT 0,</p>
+<p>  paid BOOLEAN DEFAULT FALSE,</p>
+<p>  FOREIGN KEY (split_payment_id) REFERENCES split_payment(id)</p>
+<p>);</p>
+<p>```</p>
+<div class="pagebreak"></div>
+<h2>7. REST API Documentation</h2>
+<p>Authentication: Most endpoints require <code>Authorization: Bearer &lt;accessToken&gt;</code>. Public endpoints include registration, login, refresh, OTP, feedback, QR generation/info, health, Swagger, WebSocket handshake, and Razorpay webhook depending on security configuration.</p>
+<table><tbody>
+<tr><th>Method</th><th>Endpoint</th><th>Purpose</th><th>Request Body</th><th>Response</th><th>Status Codes</th></tr>
+<tr><td>POST</td><td><code>/user/register</code></td><td>Register user</td><td><code>User</code> JSON</td><td>Created user/auth info</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/user/login</code></td><td>Login</td><td><code>{email/phoneNumber,password}</code></td><td>access/refresh tokens</td><td>200, 401</td></tr>
+<tr><td>POST</td><td><code>/user/refresh</code></td><td>Refresh access token</td><td><code>{refreshToken}</code></td><td>new access token</td><td>200, 401</td></tr>
+<tr><td>GET</td><td><code>/user/{id}</code></td><td>Get user details</td><td>None</td><td>User JSON</td><td>200, 404</td></tr>
+<tr><td>DELETE</td><td><code>/user/{id}</code></td><td>Delete user</td><td>None</td><td>message</td><td>200, 404</td></tr>
+<tr><td>PUT</td><td><code>/user/profile-picture</code></td><td>Update profile image</td><td><code>{profilePictureUrl}</code></td><td>updated user</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/user/pin-status</code></td><td>Check PIN status</td><td>None</td><td><code>{pinSet:true}</code></td><td>200, 401</td></tr>
+<tr><td>POST</td><td><code>/user/set-pin</code></td><td>Set/update PIN</td><td><code>{currentPin,newPin}</code></td><td>message</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/user/check-balance</code></td><td>Verify PIN and get balance</td><td><code>{transactionPin}</code></td><td><code>{balance}</code></td><td>200, 401</td></tr>
+<tr><td>POST</td><td><code>/wallet/addMoney</code></td><td>Add wallet balance</td><td><code>{amount,transactionPin}</code></td><td>wallet result</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/wallet/payment/order</code></td><td>Create Razorpay order</td><td><code>{amount}</code></td><td>order data</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/wallet/payment/verify</code></td><td>Verify payment</td><td>Razorpay IDs/signature</td><td>success/failure</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/wallet/withdraw</code></td><td>Withdraw to bank</td><td><code>{amount,bankAccountId,description}</code></td><td>withdrawal transaction</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/transaction/send</code></td><td>Send money</td><td>receiver, amount, PIN</td><td>transaction result</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/transaction/risk-preview</code></td><td>Preview fraud risk</td><td>query params</td><td>risk score/level</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/transaction/history/{userId}</code></td><td>Get history</td><td>filters optional</td><td>transaction list</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/transaction/search/{userId}</code></td><td>Search history</td><td>query params</td><td>transaction list</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/transaction/refund/{txId}</code></td><td>Request refund</td><td>None/body optional</td><td>refund status</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/transaction/retry/{id}</code></td><td>Retry failed tx</td><td>None</td><td>message</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/transaction/analytics/{userId}</code></td><td>Analytics</td><td>period params</td><td>chart summary</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/bank/accounts/{userId}</code></td><td>List bank accounts</td><td>None</td><td>account list</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/bank/add</code></td><td>Add bank account</td><td>account fields</td><td>account</td><td>200, 400</td></tr>
+<tr><td>DELETE</td><td><code>/bank/remove/{accountId}</code></td><td>Remove account</td><td>None</td><td>message</td><td>200, 404</td></tr>
+<tr><td>PUT</td><td><code>/bank/primary/{userId}/{accountId}</code></td><td>Mark primary</td><td>None</td><td>message</td><td>200, 404</td></tr>
+<tr><td>GET</td><td><code>/contacts</code></td><td>List contacts</td><td>None</td><td>contact list</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/contacts</code></td><td>Add contact</td><td>recipient/nickname</td><td>contact</td><td>200, 400</td></tr>
+<tr><td>DELETE</td><td><code>/contacts/{id}</code></td><td>Remove contact</td><td>None</td><td>message</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/request-money/create</code></td><td>Create request</td><td>target, amount, desc</td><td>request</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/request-money/{id}/accept</code></td><td>Accept/pay request</td><td>PIN</td><td>transaction</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/request-money/{id}/decline</code></td><td>Decline request</td><td>None</td><td>message</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/request-money/{id}/cancel</code></td><td>Cancel request</td><td>None</td><td>message</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/request-money/incoming</code></td><td>Incoming requests</td><td>None</td><td>list</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/request-money/outgoing</code></td><td>Outgoing requests</td><td>None</td><td>list</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/split/create</code></td><td>Create split</td><td>title, total, participants</td><td>split</td><td>200, 400</td></tr>
+<tr><td>POST</td><td><code>/split/{splitId}/pay</code></td><td>Pay share</td><td>user/PIN data</td><td>split</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/split/user/{userId}</code></td><td>User splits</td><td>None</td><td>list</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/split/{splitId}</code></td><td>Split details</td><td>None</td><td>split</td><td>200, 404</td></tr>
+<tr><td>GET</td><td><code>/scheduled-payments</code></td><td>List schedules</td><td>None</td><td>list</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/scheduled-payments</code></td><td>Create schedule</td><td>schedule fields/PIN</td><td>schedule</td><td>200, 400</td></tr>
+<tr><td>PATCH</td><td><code>/scheduled-payments/{id}/status</code></td><td>Update status</td><td><code>{status}</code></td><td>schedule</td><td>200, 400</td></tr>
+<tr><td>DELETE</td><td><code>/scheduled-payments/{id}</code></td><td>Delete schedule</td><td>None</td><td>message</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/bill-payments/pay</code></td><td>Pay bill</td><td>bill fields</td><td>transaction/result</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/rewards/{userId}</code></td><td>Reward summary</td><td>None</td><td>points/history</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/rewards/daily-bonus/{userId}</code></td><td>Claim daily bonus</td><td>None</td><td>reward result</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/referral/code/{userId}</code></td><td>Get referral code</td><td>None</td><td>code</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/referral/claim</code></td><td>Claim referral</td><td>code/user</td><td>reward result</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/qr/generate/{userId}</code></td><td>Generate QR PNG</td><td>None</td><td>image/png</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/qr/info/{userId}</code></td><td>QR info</td><td>None</td><td>text/JSON</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/notifications/{userId}</code></td><td>List notifications</td><td>None</td><td>list</td><td>200</td></tr>
+<tr><td>GET</td><td><code>/notifications/{userId}/unread-count</code></td><td>Count unread</td><td>None</td><td>count</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/notifications/{id}/read</code></td><td>Mark read</td><td>None</td><td>notification</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/notifications/read-all/{userId}</code></td><td>Mark all read</td><td>None</td><td>message</td><td>200</td></tr>
+<tr><td>POST</td><td><code>/api/feedback</code></td><td>Submit feedback</td><td>feedback fields</td><td>saved feedback</td><td>200, 400</td></tr>
+<tr><td>GET</td><td><code>/admin/stats</code></td><td>Admin stats</td><td>None</td><td>metrics</td><td>200, 403</td></tr>
+<tr><td>GET</td><td><code>/admin/users</code></td><td>List users</td><td>None</td><td>users</td><td>200, 403</td></tr>
+<tr><td>POST</td><td><code>/admin/users/{id}/block</code></td><td>Block user</td><td>None</td><td>user</td><td>200, 403</td></tr>
+<tr><td>POST</td><td><code>/admin/users/{id}/unblock</code></td><td>Unblock user</td><td>None</td><td>user</td><td>200, 403</td></tr>
+<tr><td>GET</td><td><code>/admin/refunds</code></td><td>Pending refunds</td><td>None</td><td>transactions</td><td>200, 403</td></tr>
+<tr><td>POST</td><td><code>/admin/refunds/{txId}/approve</code></td><td>Approve refund</td><td>None</td><td>transaction</td><td>200, 403</td></tr>
+<tr><td>POST</td><td><code>/admin/refunds/{txId}/reject</code></td><td>Reject refund</td><td>None</td><td>transaction</td><td>200, 403</td></tr>
+</tbody></table>
+<p>Example request:</p>
+<p>```json</p>
+<p>POST /bill-payments/pay</p>
+<p>{</p>
+<p>  &quot;billType&quot;: &quot;ELECTRICITY&quot;,</p>
+<p>  &quot;provider&quot;: &quot;BSES&quot;,</p>
+<p>  &quot;accountNumber&quot;: &quot;1234567890&quot;,</p>
+<p>  &quot;amount&quot;: 750,</p>
+<p>  &quot;description&quot;: &quot;June bill&quot;</p>
+<p>}</p>
+<p>```</p>
+<p>Example response:</p>
+<p>```json</p>
+<p>{</p>
+<p>  &quot;message&quot;: &quot;Bill paid successfully&quot;,</p>
+<p>  &quot;transactionId&quot;: 81,</p>
+<p>  &quot;pointsAwarded&quot;: 7,</p>
+<p>  &quot;cashback&quot;: 0.0</p>
+<p>}</p>
+<p>```</p>
+<div class="pagebreak"></div>
+<h2>8. Security Features</h2>
+<h3>Authentication</h3>
+<p>Users authenticate with email/phone and password. On success, the backend returns JWT access and refresh tokens. The frontend stores tokens and attaches the access token to protected API calls.</p>
+<h3>Authorization</h3>
+<p>Spring Security protects routes. Admin endpoints require admin authority/role, while normal wallet and account operations require an authenticated user.</p>
+<h3>JWT</h3>
+<p>JWT access tokens represent the logged-in subject. The <code>JwtFilter</code> extracts the bearer token, validates it through <code>JwtUtil</code>, and sets the authentication context for controllers.</p>
+<h3>Session Management</h3>
+<p>The application uses stateless API authentication rather than server-side HTTP sessions. Refresh tokens are used to renew expired access tokens.</p>
+<h3>Password and PIN Encryption</h3>
+<p>Passwords and transaction PINs are encoded with BCrypt. The transaction PIN is separately checked for high-risk actions such as balance checks, transfers, scheduled payments, and wallet operations.</p>
+<h3>Rate Limiting</h3>
+<p><code>RateLimitFilter</code> uses Bucket4j token buckets to reduce abuse and brute-force pressure.</p>
+<h3>Best Practices Used</h3>
+<ul>
+<li>BCrypt for secrets.</li>
+<li>JWT bearer authentication.</li>
+<li>Role-based admin protection.</li>
+<li>Transaction PIN for sensitive payment actions.</li>
+<li>CORS configuration.</li>
+<li>Environment-variable-based secrets.</li>
+<li>Public/private endpoint separation.</li>
+</ul>
+<h3>Recommended Improvements</h3>
+<ul>
+<li>Store refresh tokens server-side with revocation.</li>
+<li>Add account lockout after repeated failed PIN/password attempts.</li>
+<li>Add audit logs for admin and payment operations.</li>
+<li>Add database transactions and row locking for balance updates.</li>
+<li>Add CSRF strategy if cookies replace local storage.</li>
+<li>Move wallet balance to ledger entries for stronger financial correctness.</li>
+</ul>
+<div class="pagebreak"></div>
+<h2>9. Feature-Wise Explanation</h2>
+<table><tbody>
+<tr><th>Feature</th><th>Purpose</th><th>Implementation Flow</th><th>Files Used</th><th>Tables</th><th>APIs</th><th>Interview Focus</th></tr>
+<tr><td>Registration/Login</td><td>User onboarding</td><td>React form -&gt; <code>/user</code> API -&gt; BCrypt/JWT -&gt; store tokens</td><td><code>Login.jsx</code>, <code>Register.jsx</code>, <code>UserController</code>, <code>UserService</code>, <code>JwtUtil</code></td><td><code>app_user</code></td><td><code>/user/register</code>, <code>/user/login</code></td><td>JWT, BCrypt, validation</td></tr>
+<tr><td>Wallet Dashboard</td><td>Show balance and actions</td><td>Load user/history/accounts -&gt; show cards -&gt; add/withdraw/reward</td><td><code>Dashboard.jsx</code>, <code>WalletController</code>, <code>RewardController</code></td><td><code>app_user</code>, <code>transaction</code>, <code>bank_account</code>, <code>reward</code></td><td><code>/wallet/*</code>, <code>/rewards/*</code></td><td>Balance consistency</td></tr>
+<tr><td>Send Money</td><td>Transfer wallet amount</td><td>Validate PIN -&gt; risk preview -&gt; debit/credit -&gt; save tx -&gt; notify</td><td><code>SendMoney.jsx</code>, <code>TransactionController</code>, <code>TransactionService</code></td><td><code>app_user</code>, <code>transaction</code>, <code>notification</code></td><td><code>/transaction/send</code></td><td>Atomicity, fraud, PIN</td></tr>
+<tr><td>Request Money</td><td>Ask another user to pay</td><td>Create request -&gt; target accepts with PIN -&gt; transaction created</td><td><code>RequestMoney.jsx</code>, <code>MoneyRequestController</code></td><td><code>money_request</code>, <code>transaction</code></td><td><code>/request-money/*</code></td><td>Status workflow</td></tr>
+<tr><td>Split Payments</td><td>Split group expense</td><td>Creator adds participants -&gt; equal shares -&gt; participants pay</td><td><code>SplitPayment.jsx</code>, <code>SplitPaymentService</code></td><td><code>split_payment</code>, <code>split_participant</code></td><td><code>/split/*</code></td><td>One-to-many mapping</td></tr>
+<tr><td>Scheduled Payments</td><td>Store recurring instructions</td><td>User creates schedule with frequency/start date -&gt; status updates</td><td><code>ScheduledPayments.jsx</code>, <code>ScheduledPaymentController</code></td><td><code>scheduled_payment</code></td><td><code>/scheduled-payments</code></td><td>Scheduling design</td></tr>
+<tr><td>Bill Payments</td><td>Pay utility bills</td><td>Bill form -&gt; wallet debit -&gt; categorized transaction -&gt; rewards</td><td><code>BillPayments.jsx</code>, <code>BillPaymentService</code></td><td><code>transaction</code>, <code>reward</code></td><td><code>/bill-payments/pay</code></td><td>Category and cashback</td></tr>
+<tr><td>QR</td><td>Generate and scan payment QR</td><td>Backend generates PNG -&gt; frontend displays/downloads/scans</td><td><code>QRPage.jsx</code>, <code>QrController</code></td><td><code>app_user</code></td><td><code>/qr/generate</code>, <code>/qr/info</code></td><td>QR payload design</td></tr>
+<tr><td>Notifications</td><td>Real-time alerts</td><td>Save notification -&gt; STOMP push -&gt; frontend badge update</td><td><code>WebSocketContext.jsx</code>, <code>NotificationService</code></td><td><code>notification</code></td><td><code>/notifications/*</code>, <code>/ws</code></td><td>WebSocket vs polling</td></tr>
+<tr><td>Analytics</td><td>Spending insights</td><td>Fetch history and analytics -&gt; chart by period/category</td><td><code>Analytics.jsx</code>, <code>TransactionController</code></td><td><code>transaction</code></td><td><code>/transaction/analytics</code></td><td>Aggregation</td></tr>
+<tr><td>Bank Accounts</td><td>Linked withdrawal accounts</td><td>Add/mask account -&gt; set primary -&gt; remove</td><td><code>Settings.jsx</code>, <code>BankAccountController</code></td><td><code>bank_account</code></td><td><code>/bank/*</code></td><td>Masking sensitive data</td></tr>
+<tr><td>Rewards/Referral</td><td>Engagement and points</td><td>Daily/referral/transaction rewards saved as events</td><td><code>Rewards.jsx</code>, <code>Referral.jsx</code>, <code>RewardService</code></td><td><code>reward</code>, <code>app_user</code></td><td><code>/rewards/*</code>, <code>/referral/*</code></td><td>Idempotency</td></tr>
+<tr><td>Admin Panel</td><td>Platform control</td><td>Admin loads stats/users/refunds -&gt; block or approve</td><td><code>AdminPanel.jsx</code>, <code>AdminController</code>, <code>AdminService</code></td><td><code>app_user</code>, <code>transaction</code></td><td><code>/admin/*</code></td><td>RBAC</td></tr>
+<tr><td>Feedback</td><td>Capture user feedback</td><td>Public form -&gt; validation -&gt; save feedback</td><td><code>Feedback.jsx</code>, <code>FeedbackController</code></td><td><code>feedback</code></td><td><code>/api/feedback</code></td><td>Public endpoint security</td></tr>
+</tbody></table>
+<div class="pagebreak"></div>
+<h2>10. Viva Questions and Answers</h2>
+<h3>10.1 Beginner Questions</h3>
+<p>1. What is PayFlow?  </p>
+<p>PayFlow is a full-stack digital wallet system for sending money, managing balance, requests, bills, rewards, QR codes, and notifications.</p>
+<p>2. What are the main modules?  </p>
+<p>Authentication, wallet, transactions, requests, split payments, scheduled payments, bills, rewards, QR, notifications, settings, and admin.</p>
+<p>3. Which frontend technology is used?  </p>
+<p>React 19 with Vite.</p>
+<p>4. Which backend technology is used?  </p>
+<p>Java 17 with Spring Boot.</p>
+<p>5. Which databases are supported?  </p>
+<p>H2 for local development and MySQL for production.</p>
+<p>6. What is REST API?  </p>
+<p>A REST API exposes resources over HTTP using methods such as GET, POST, PUT, PATCH, and DELETE.</p>
+<p>7. What is JWT?  </p>
+<p>JWT is a signed token used to authenticate stateless API requests.</p>
+<p>8. Why use BCrypt?  </p>
+<p>BCrypt securely hashes passwords and PINs with salt and computational cost.</p>
+<p>9. What is JPA?  </p>
+<p>JPA is a Java specification for mapping objects to relational database tables.</p>
+<p>10. What is Hibernate?  </p>
+<p>Hibernate is the ORM implementation used by Spring Data JPA.</p>
+<p>11. What is a controller?  </p>
+<p>A controller receives HTTP requests and returns HTTP responses.</p>
+<p>12. What is a service?  </p>
+<p>A service contains business logic.</p>
+<p>13. What is a repository?  </p>
+<p>A repository handles database operations.</p>
+<p>14. What is an entity?  </p>
+<p>An entity is a Java class mapped to a database table.</p>
+<p>15. What is React Router?  </p>
+<p>It manages page navigation in a React single-page application.</p>
+<p>16. What is Vite?  </p>
+<p>Vite is a fast frontend build and development tool.</p>
+<p>17. What is WebSocket used for here?  </p>
+<p>Real-time notifications and balance updates.</p>
+<p>18. What is Razorpay used for?  </p>
+<p>Creating and verifying payment orders for wallet top-ups.</p>
+<p>19. What is Twilio used for?  </p>
+<p>OTP/SMS communication capability.</p>
+<p>20. What is the transaction PIN?  </p>
+<p>A separate PIN used to protect sensitive wallet actions.</p>
+<p>21. What is an admin panel?  </p>
+<p>A protected interface for stats, user blocking, and refund management.</p>
+<p>22. What is a DTO?  </p>
+<p>A Data Transfer Object carries structured request or response data.</p>
+<p>23. What is CORS?  </p>
+<p>CORS controls which frontend origins can call backend APIs.</p>
+<p>24. What is H2 console?  </p>
+<p>A browser interface to inspect the local H2 database.</p>
+<p>25. What is Maven?  </p>
+<p>Maven manages Java dependencies, build lifecycle, and packaging.</p>
+<p>26. What is npm?  </p>
+<p>npm manages JavaScript dependencies and scripts.</p>
+<p>27. What is a primary key?  </p>
+<p>A unique identifier for each table row.</p>
+<p>28. What is a foreign key?  </p>
+<p>A reference from one table to another table.</p>
+<p>29. What is <code>@RestController</code>?  </p>
+<p>A Spring annotation that combines controller behavior with JSON response handling.</p>
+<p>30. What is <code>@Autowired</code>?  </p>
+<p>It injects Spring-managed dependencies.</p>
+<p>31. What is <code>@Entity</code>?  </p>
+<p>It marks a class as a JPA-persisted entity.</p>
+<p>32. What is <code>@Id</code>?  </p>
+<p>It marks the primary key field.</p>
+<p>33. What is <code>@GeneratedValue</code>?  </p>
+<p>It generates primary key values automatically.</p>
+<p>34. What is a protected route?  </p>
+<p>A frontend route that only authenticated users can access.</p>
+<p>35. What is local storage used for?  </p>
+<p>Storing JWT tokens and user data on the client.</p>
+<p>36. What is a payment request?  </p>
+<p>A request from one user asking another user to pay a specified amount.</p>
+<p>37. What is split payment?  </p>
+<p>A feature that divides a total amount among participants.</p>
+<p>38. What is scheduled payment?  </p>
+<p>A saved recurring payment instruction.</p>
+<p>39. What is transaction history?  </p>
+<p>A list of past wallet activities.</p>
+<p>40. What is analytics?  </p>
+<p>Charts and summaries based on transaction data.</p>
+<p>41. What is a reward point?  </p>
+<p>An incentive earned from actions such as transactions or daily bonuses.</p>
+<p>42. What is a referral code?  </p>
+<p>A code users can share to earn referral rewards.</p>
+<p>43. What is QR payment?  </p>
+<p>A payment flow where user information is represented in a QR code.</p>
+<p>44. What is rate limiting?  </p>
+<p>Restricting request frequency to prevent abuse.</p>
+<p>45. What is Swagger UI?  </p>
+<p>An interface for viewing and testing documented APIs.</p>
+<p>46. What is <code>application.properties</code>?  </p>
+<p>Spring Boot configuration file.</p>
+<p>47. What is environment variable configuration?  </p>
+<p>Reading secrets/settings from deployment environment instead of hardcoding.</p>
+<p>48. What is Docker?  </p>
+<p>A containerization tool for packaging applications.</p>
+<p>49. What is a build?  </p>
+<p>The process of compiling/bundling source code into runnable output.</p>
+<p>50. What is deployment?  </p>
+<p>Running the application on a server or cloud platform.</p>
+<h3>10.2 Intermediate Questions</h3>
+<p>1. How does login work in PayFlow?  </p>
+<p>The frontend sends credentials, backend verifies BCrypt password, generates access/refresh tokens, and frontend stores them for future calls.</p>
+<p>2. How does route protection work?  </p>
+<p>React checks auth context; Spring Security validates JWT for backend protection.</p>
+<p>3. Why use layered architecture?  </p>
+<p>It separates HTTP handling, business logic, persistence, and security, making the project maintainable.</p>
+<p>4. How is money transfer implemented?  </p>
+<p>Sender and receiver are validated, sender balance is debited, receiver balance is credited, a transaction is saved, and notifications are sent.</p>
+<p>5. What should be transactional in the backend?  </p>
+<p>Debit, credit, and transaction record creation should happen in one database transaction.</p>
+<p>6. How does fraud preview help?  </p>
+<p>It warns users/admins about abnormal transaction patterns before payment.</p>
+<p>7. Why is WebSocket useful?  </p>
+<p>It pushes updates instantly without repeated polling.</p>
+<p>8. How is refresh token flow handled?  </p>
+<p><code>apiFetch</code> retries unauthorized requests by calling the refresh endpoint and storing a new access token.</p>
+<p>9. Why separate DTOs from entities?  </p>
+<p>DTOs control external payload shape and avoid exposing sensitive entity fields.</p>
+<p>10. What is role-based access control?  </p>
+<p>Different endpoints are allowed based on user roles such as USER or ADMIN.</p>
+<p>11. Why is <code>transaction_pin</code> ignored in JSON?  </p>
+<p>It prevents the hashed PIN from being leaked in API responses.</p>
+<p>12. How are QR codes generated?  </p>
+<p>The backend uses ZXing to encode payment/user information into a PNG image.</p>
+<p>13. How do rewards work?  </p>
+<p>Reward events are saved with user ID, points, source, and date, then summarized on request.</p>
+<p>14. How are bank accounts protected?  </p>
+<p>The app stores masked display values and uses validation for account fields.</p>
+<p>15. How is bill payment represented?  </p>
+<p>As a categorized transaction with bill metadata in the description/category fields.</p>
+<p>16. Why use <code>ddl-auto=update</code>?  </p>
+<p>It updates schema during development, but migrations are better for production.</p>
+<p>17. What is the role of repositories?  </p>
+<p>They provide CRUD and query methods without manual SQL.</p>
+<p>18. How are frontend exports implemented?  </p>
+<p>jsPDF/html2canvas and CSV generation utilities convert transaction data into files.</p>
+<p>19. What is a STOMP topic?  </p>
+<p>A destination channel that clients subscribe to for messages.</p>
+<p>20. How does admin block work?  </p>
+<p>The user <code>frozen</code> flag is changed, and payment actions can reject frozen users.</p>
+<p>21. What is idempotency?  </p>
+<p>Ensuring repeated requests do not duplicate critical operations.</p>
+<p>22. Where is idempotency needed?  </p>
+<p>Payment verification, webhooks, reward claims, and retries.</p>
+<p>23. How would you handle concurrent transfers?  </p>
+<p>Use database transactions, locking, optimistic versioning, or ledger-based balance calculation.</p>
+<p>24. Why use H2 locally and MySQL in production?  </p>
+<p>H2 is quick for local setup; MySQL is persistent and production-suitable.</p>
+<p>25. What is a repository derived query?  </p>
+<p>A method name that Spring converts into a SQL query.</p>
+<p>26. Why use environment variables?  </p>
+<p>They keep secrets outside source code.</p>
+<p>27. What is the difference between access and refresh token?  </p>
+<p>Access tokens are short-lived API credentials; refresh tokens renew access.</p>
+<p>28. How do you validate a Razorpay payment?  </p>
+<p>Verify the signature using order ID, payment ID, and gateway secret.</p>
+<p>29. What are status codes used for?  </p>
+<p>They tell clients whether the operation succeeded or failed.</p>
+<p>30. How does request money differ from send money?  </p>
+<p>Request money creates a pending request; send money immediately transfers balance.</p>
+<p>31. What is a one-to-many relationship here?  </p>
+<p>One split payment has many split participants.</p>
+<p>32. What is the purpose of <code>GlobalExceptionHandler</code>?  </p>
+<p>To return consistent error responses for exceptions.</p>
+<p>33. Why is frontend state stored in context?  </p>
+<p>It shares auth/theme/language/WebSocket state across components.</p>
+<p>34. What is the purpose of <code>Layout</code>?  </p>
+<p>It provides the authenticated app shell, navigation, notification badge, and logout.</p>
+<p>35. How does notification unread count work?  </p>
+<p>The frontend fetches count and increments it when WebSocket messages arrive.</p>
+<p>36. What is a scheduled payment status?  </p>
+<p>It marks a schedule as ACTIVE, PAUSED, or CANCELLED.</p>
+<p>37. Why add tests for services?  </p>
+<p>Service tests validate business logic without requiring full UI testing.</p>
+<p>38. What should be tested first?  </p>
+<p>Transfers, refunds, login, PIN checks, reward idempotency, and admin authorization.</p>
+<p>39. What is dependency injection?  </p>
+<p>Spring provides required objects instead of classes constructing them manually.</p>
+<p>40. What is a bean?  </p>
+<p>A Spring-managed object.</p>
+<p>41. What is a filter?  </p>
+<p>A component that processes HTTP requests before controllers.</p>
+<p>42. How does <code>JwtFilter</code> work?  </p>
+<p>It extracts token, validates it, and sets authentication context.</p>
+<p>43. Why use <code>ResponseEntity</code>?  </p>
+<p>It controls HTTP status, headers, and body.</p>
+<p>44. What is <code>Authentication</code> parameter?  </p>
+<p>Spring injects the current authenticated principal.</p>
+<p>45. Why use charting in analytics?  </p>
+<p>Charts make spending and receiving trends easier to understand.</p>
+<p>46. What is SPA?  </p>
+<p>A single-page application updates UI without full page reloads.</p>
+<p>47. What is HMR?  </p>
+<p>Hot Module Replacement updates frontend code during development.</p>
+<p>48. How is CORS configured?  </p>
+<p>Through a Spring MVC config class that allows frontend origins/methods.</p>
+<p>49. What is the deployment architecture?  </p>
+<p>Backend can deploy on Railway/Docker, frontend on Vercel, database on MySQL.</p>
+<p>50. What are common payment project risks?  </p>
+<p>Race conditions, duplicate webhooks, token leakage, weak validation, and missing audit logs.</p>
+<h3>10.3 Advanced Questions</h3>
+<p>1. How would you redesign balance storage for production?  </p>
+<p>Use immutable ledger entries and compute available balance from settled debits/credits, with snapshots for performance.</p>
+<p>2. How would you make transfers atomic?  </p>
+<p>Use <code>@Transactional</code>, row-level locks or optimistic locking, and rollback on any debit/credit/insert failure.</p>
+<p>3. How would you handle duplicate Razorpay webhook events?  </p>
+<p>Store gateway event/order/payment IDs with unique constraints and ignore already processed events.</p>
+<p>4. How would you secure refresh tokens?  </p>
+<p>Store hashed refresh tokens server-side, bind them to device/session, rotate on use, and revoke on logout.</p>
+<p>5. How would you prevent brute-force PIN attacks?  </p>
+<p>Add retry counters, cooldowns, device risk checks, and alerting.</p>
+<p>6. What is optimistic locking?  </p>
+<p>It uses a version column to detect concurrent updates and retry safely.</p>
+<p>7. What is pessimistic locking?  </p>
+<p>It locks rows during a transaction to block concurrent conflicting writes.</p>
+<p>8. Why is local storage risky for JWT?  </p>
+<p>Tokens in local storage can be stolen by XSS; httpOnly cookies reduce that risk.</p>
+<p>9. How would you migrate schema in production?  </p>
+<p>Use Flyway or Liquibase instead of Hibernate <code>ddl-auto=update</code>.</p>
+<p>10. How would you improve fraud detection?  </p>
+<p>Use velocity checks, device fingerprinting, graph analysis, ML models, and manual review queues.</p>
+<p>11. What are consistency requirements in payment systems?  </p>
+<p>Balances, transaction states, gateway states, refunds, and notifications must remain synchronized.</p>
+<p>12. How would you scale WebSocket notifications?  </p>
+<p>Use a message broker such as Redis/RabbitMQ and sticky sessions or brokered STOMP relay.</p>
+<p>13. How would you observe production issues?  </p>
+<p>Add structured logs, metrics, tracing, error tracking, dashboards, and alerts.</p>
+<p>14. How would you design refunds?  </p>
+<p>Use explicit refund transactions and state machines rather than editing original records only.</p>
+<p>15. What is a payment state machine?  </p>
+<p>A controlled set of states such as INITIATED, PENDING, SUCCESS, FAILED, REFUND_PENDING, REFUNDED.</p>
+<p>16. How would you handle partial failures?  </p>
+<p>Use retries, compensation, outbox pattern, and reconciliation jobs.</p>
+<p>17. What is the outbox pattern?  </p>
+<p>Save events in the database inside the same transaction, then publish asynchronously.</p>
+<p>18. How would you secure admin actions?  </p>
+<p>Use RBAC, audit logging, MFA, least privilege, and approval workflows.</p>
+<p>19. How would you prevent self-referral abuse?  </p>
+<p>Check user identity, device, payment activity, and unique referral claim constraints.</p>
+<p>20. How would you make reports faster?  </p>
+<p>Add indexes, summary tables, caching, and pagination.</p>
+<p>21. Which indexes would help?  </p>
+<p>Indexes on <code>transaction.sender_id</code>, <code>transaction.receiver_id</code>, <code>time</code>, <code>status</code>, <code>notification.user_id</code>, and <code>money_request.target_user_id</code>.</p>
+<p>22. How would you paginate history?  </p>
+<p>Use Spring Data <code>Pageable</code> and frontend page/infinite scroll controls.</p>
+<p>23. Why avoid floating point for money?  </p>
+<p>Floating point can cause precision errors; use <code>BigDecimal</code> or integer paise/cents.</p>
+<p>24. What would you change in PayFlow for real money?  </p>
+<p>Replace <code>double</code> amounts with <code>BigDecimal</code>, add ledger, KYC, reconciliation, and strict audit trails.</p>
+<p>25. How would you protect webhooks?  </p>
+<p>Verify signature, use HTTPS, validate timestamp, and make processing idempotent.</p>
+<p>26. How would you test payment flows?  </p>
+<p>Use unit tests, integration tests, gateway sandbox tests, contract tests, and E2E tests.</p>
+<p>27. What is a contract test?  </p>
+<p>It verifies API request/response contracts between frontend and backend.</p>
+<p>28. How would you improve frontend auth?  </p>
+<p>Use secure cookies or token rotation, central error boundaries, and clearer session expiry UX.</p>
+<p>29. How would you handle offline failures?  </p>
+<p>Queue drafts locally, show retry states, and avoid duplicate submissions with idempotency keys.</p>
+<p>30. How would you design scheduled execution?  </p>
+<p>Use Spring Scheduler/Quartz and lock jobs to avoid duplicate execution in multiple instances.</p>
+<p>31. How would you make scheduled payments safe?  </p>
+<p>Check balance at execution time, record attempts, retry transient failures, notify users.</p>
+<p>32. What is eventual consistency?  </p>
+<p>Systems may update related views asynchronously but converge to the correct state.</p>
+<p>33. Where can eventual consistency be acceptable here?  </p>
+<p>Notifications, analytics summaries, and reward displays.</p>
+<p>34. Where is strong consistency required?  </p>
+<p>Wallet debits, credits, and final transaction state.</p>
+<p>35. How would you implement audit logs?  </p>
+<p>Create append-only records for login, transfer, admin actions, refund decisions, and settings changes.</p>
+<p>36. How would you protect PII?  </p>
+<p>Encrypt sensitive fields, mask account numbers, restrict access, and avoid logging secrets.</p>
+<p>37. Why use DTO validation annotations?  </p>
+<p>They centralize request validation and produce consistent errors.</p>
+<p>38. How would you improve error handling?  </p>
+<p>Use standardized error codes, <code>GlobalExceptionHandler</code>, validation messages, and correlation IDs.</p>
+<p>39. What is correlation ID?  </p>
+<p>A request identifier used to trace logs across services.</p>
+<p>40. How would you handle multi-currency?  </p>
+<p>Store currency per transaction, use exchange-rate service, and avoid mixing balances.</p>
+<p>41. How would you make APIs versioned?  </p>
+<p>Prefix routes such as <code>/api/v1/transaction</code>.</p>
+<p>42. How would you secure CORS?  </p>
+<p>Allow only known production frontend origins and required methods/headers.</p>
+<p>43. How would you prevent mass assignment?  </p>
+<p>Use DTOs and map only allowed fields instead of binding entities directly.</p>
+<p>44. What is DTO-to-entity mapping?  </p>
+<p>Converting external request data into internal model objects.</p>
+<p>45. How would you improve admin stats?  </p>
+<p>Precompute aggregates or use optimized SQL queries.</p>
+<p>46. What is horizontal scaling?  </p>
+<p>Running multiple backend instances behind a load balancer.</p>
+<p>47. How would JWT work with horizontal scaling?  </p>
+<p>Stateless JWT validates on any instance if all share signing secrets.</p>
+<p>48. What is secret rotation?  </p>
+<p>Changing secrets safely while old tokens/keys expire.</p>
+<p>49. How would you handle disaster recovery?  </p>
+<p>Backups, restore tests, replicated database, and deployment rollback strategy.</p>
+<p>50. What is the strongest part of PayFlow architecture?  </p>
+<p>Its clear separation of frontend, API, service, repository, model, security, and configuration layers.</p>
+<div class="pagebreak"></div>
+<h2>11. HR Interview Questions</h2>
+<h3>Tell me about your project.</h3>
+<p>PayFlow is a full-stack digital wallet application built with React and Spring Boot. It supports registration, login, wallet balance, money transfer, request money, split payments, scheduled payments, bill payments, QR codes, rewards, notifications, and an admin panel. I focused on building a practical payment workflow with JWT security, transaction PIN checks, JPA persistence, and a responsive frontend.</p>
+<h3>What challenges did you face?</h3>
+<p>The main challenges were designing secure payment flows, keeping frontend state synchronized with backend data, handling token refresh, structuring many features cleanly, and making transaction-related features understandable for users. I solved these through layered backend design, a central API helper, React contexts, and separate service classes.</p>
+<h3>Why did you choose this technology?</h3>
+<p>Spring Boot is reliable for secure backend APIs, Java is strong for enterprise logic, JPA simplifies database work, and React makes it easy to build a dynamic single-page frontend. The stack is also common in internships and placements, so it demonstrates industry-relevant skills.</p>
+<h3>What was your contribution?</h3>
+<p>My contribution was building and integrating full-stack workflows: authentication, wallet actions, transaction history, requests, split/scheduled payments, rewards, notifications, settings, admin features, and documentation. I also worked on security using JWT, BCrypt, role checks, and transaction PIN.</p>
+<h3>What would you improve?</h3>
+<p>I would improve production readiness by adding ledger-based accounting, BigDecimal money fields, database migrations, refresh-token revocation, stronger audit logs, idempotency keys, better automated tests, and payment reconciliation jobs.</p>
+<div class="pagebreak"></div>
+<h2>12. Project Presentation Slides</h2>
+<h3>Slide 1: Title</h3>
+<p>PayFlow: Full-Stack Digital Wallet and Payment System  </p>
+<p>React + Spring Boot + JPA + JWT + WebSocket</p>
+<h3>Slide 2: Problem Statement</h3>
+<p>Users need one secure platform for wallet balance, transfers, requests, bill payments, QR flows, rewards, and transaction tracking.</p>
+<h3>Slide 3: Objectives</h3>
+<p>Build secure authentication, wallet operations, transaction history, real-time notifications, analytics, and admin controls.</p>
+<h3>Slide 4: Technology Stack</h3>
+<p>Frontend: React, Vite, React Router, Recharts, jsPDF  </p>
+<p>Backend: Java, Spring Boot, Security, JPA, WebSocket  </p>
+<p>Database: H2/MySQL  </p>
+<p>Integrations: Razorpay, Twilio, SMTP</p>
+<h3>Slide 5: Architecture</h3>
+<p>React frontend calls Spring Boot REST APIs with JWT. Backend services use repositories and JPA entities. WebSocket pushes notifications. H2/MySQL stores data.</p>
+<h3>Slide 6: Core Features</h3>
+<p>Register/login, wallet dashboard, send money, request money, transaction PIN, bank accounts, transaction history, PDF/CSV export.</p>
+<h3>Slide 7: Advanced Features</h3>
+<p>Split payments, scheduled payments, bill payments, QR code generation/scanning, rewards, referrals, analytics.</p>
+<h3>Slide 8: Security</h3>
+<p>JWT authentication, refresh token flow, BCrypt password/PIN hashing, admin role protection, rate limiting, CORS, environment-based secrets.</p>
+<h3>Slide 9: Database Design</h3>
+<p>Main tables: <code>app_user</code>, <code>transaction</code>, <code>bank_account</code>, <code>notification</code>, <code>money_request</code>, <code>split_payment</code>, <code>split_participant</code>, <code>reward</code>, <code>scheduled_payment</code>.</p>
+<h3>Slide 10: Workflow</h3>
+<p>User enters payment -&gt; frontend sends JWT request -&gt; backend validates user/PIN -&gt; service updates balances -&gt; transaction saved -&gt; notification pushed.</p>
+<h3>Slide 11: Challenges</h3>
+<p>Token refresh, balance consistency, feature modularization, real-time updates, validating sensitive actions, and mapping frontend workflows to APIs.</p>
+<h3>Slide 12: Testing and Deployment</h3>
+<p>Backend service tests exist. Backend can run with Maven/Docker/Railway. Frontend can build with Vite and deploy to Vercel.</p>
+<h3>Slide 13: Future Scope</h3>
+<p>KYC, UPI, ledger accounting, BigDecimal money, audit logs, payment reconciliation, better fraud detection, and production observability.</p>
+<h3>Slide 14: Conclusion</h3>
+<p>PayFlow demonstrates a complete real-world full-stack payment application with security, database design, APIs, frontend workflows, and interview-ready architecture.</p>
+<div class="pagebreak"></div>
+<h2>13. Resume Description</h2>
+<h3>2-Line Project Summary</h3>
+<p>Built PayFlow, a full-stack digital wallet using React, Spring Boot, JWT, JPA, WebSocket, and MySQL/H2. Implemented wallet transfers, bill payments, requests, split/scheduled payments, QR codes, rewards, analytics, and admin controls.</p>
+<h3>5-Line Project Summary</h3>
+<p>Developed a secure digital wallet platform with React 19 frontend and Spring Boot backend.  </p>
+<p>Implemented JWT authentication, BCrypt password/PIN hashing, protected routes, and admin role authorization.  </p>
+<p>Built wallet balance, money transfer, request money, split payments, scheduled payments, bill payments, QR, rewards, and referrals.  </p>
+<p>Designed JPA entities and repositories for users, transactions, bank accounts, notifications, requests, rewards, and split payments.  </p>
+<p>Added real-time notifications with WebSocket/STOMP and transaction PDF/CSV export utilities.</p>
+<h3>ATS-Friendly Resume Description</h3>
+<p>PayFlow | Full-Stack Digital Wallet Application  </p>
+<p>Built a full-stack payment system using Java 17, Spring Boot, Spring Security, Spring Data JPA, React 19, Vite, MySQL/H2, JWT, WebSocket/STOMP, Razorpay, and Twilio. Developed REST APIs for authentication, wallet management, money transfer, bill payments, request money, split payments, scheduled payments, rewards, referrals, QR code generation, notifications, and admin refund/user management. Implemented BCrypt password and transaction PIN hashing, JWT-based protected APIs, role-based admin access, rate limiting, real-time notification delivery, and PDF/CSV statement export.</p>
+<h3>LinkedIn Project Description</h3>
+<p>PayFlow is my full-stack digital wallet project built with React and Spring Boot. It includes secure login, JWT authentication, wallet balance, send/request money, split and scheduled payments, bill payments, QR code flows, rewards, analytics, notifications, and an admin panel. The backend follows a clean controller-service-repository architecture with JPA entities and H2/MySQL persistence, while the frontend uses React Router, context providers, charts, and export utilities.</p>
+<div class="pagebreak"></div>
+<h2>14. Interview Cheat Sheet</h2>
+<h3>Important Classes</h3>
+<ul>
+<li><code>UserController</code>: registration, login, refresh, PIN, profile, password reset.</li>
+<li><code>WalletController</code>: wallet top-up, Razorpay verification, withdrawal.</li>
+<li><code>TransactionController</code>: send money, history, search, refund, analytics.</li>
+<li><code>MoneyRequestController</code>: request creation and acceptance workflow.</li>
+<li><code>SplitPaymentController</code>: split group and participant payments.</li>
+<li><code>ScheduledPaymentController</code>: recurring payment metadata.</li>
+<li><code>AdminController</code>: stats, block/unblock, refunds.</li>
+<li><code>JwtUtil</code>, <code>JwtFilter</code>, <code>SecurityConfig</code>, <code>RateLimitFilter</code>: security.</li>
+<li><code>User</code>, <code>Transaction</code>, <code>BankAccount</code>, <code>Notification</code>, <code>MoneyRequest</code>, <code>SplitPayment</code>, <code>SplitParticipant</code>, <code>Reward</code>.</li>
+</ul>
+<h3>Important Functions</h3>
+<ul>
+<li><code>apiFetch</code>: attaches JWT and refreshes token.</li>
+<li><code>login/logout/updateUser/refreshUser</code>: auth state management.</li>
+<li><code>sendMoney</code>: core wallet transfer.</li>
+<li><code>verifyPayment</code>: Razorpay signature verification.</li>
+<li><code>payBill</code>: wallet debit and bill transaction.</li>
+<li><code>claimDailyBonus</code>: reward idempotency.</li>
+<li><code>generateQr</code>: QR image creation.</li>
+<li><code>getDashboardStats</code>: admin metrics.</li>
+</ul>
+<h3>Important APIs</h3>
+<ul>
+<li><code>/user/login</code></li>
+<li><code>/user/register</code></li>
+<li><code>/wallet/payment/order</code></li>
+<li><code>/wallet/payment/verify</code></li>
+<li><code>/transaction/send</code></li>
+<li><code>/transaction/history/{userId}</code></li>
+<li><code>/request-money/*</code></li>
+<li><code>/split/*</code></li>
+<li><code>/scheduled-payments</code></li>
+<li><code>/bill-payments/pay</code></li>
+<li><code>/notifications/*</code></li>
+<li><code>/admin/*</code></li>
+</ul>
+<h3>Important Tables</h3>
+<ul>
+<li><code>app_user</code></li>
+<li><code>transaction</code></li>
+<li><code>bank_account</code></li>
+<li><code>notification</code></li>
+<li><code>money_request</code></li>
+<li><code>favorite_contact</code></li>
+<li><code>reward</code></li>
+<li><code>scheduled_payment</code></li>
+<li><code>split_payment</code></li>
+<li><code>split_participant</code></li>
+<li><code>otp_records</code></li>
+<li><code>feedback</code></li>
+</ul>
+<h3>Design Patterns and Architecture</h3>
+<ul>
+<li>Layered architecture.</li>
+<li>Repository pattern through Spring Data JPA.</li>
+<li>Dependency injection.</li>
+<li>DTO pattern.</li>
+<li>Filter chain for security.</li>
+<li>Context provider pattern in React.</li>
+<li>Observer/publish-subscribe style notifications through WebSocket/STOMP.</li>
+</ul>
+<h3>Security Concepts</h3>
+<ul>
+<li>JWT access tokens.</li>
+<li>Refresh token flow.</li>
+<li>BCrypt password and PIN hashing.</li>
+<li>Role-based authorization.</li>
+<li>Rate limiting.</li>
+<li>CORS.</li>
+<li>Environment variable secrets.</li>
+<li>Transaction PIN for sensitive actions.</li>
+</ul>
+<div class="pagebreak"></div>
+<h2>15. PDF Formatting Guide</h2>
+<p>This report is PDF-ready Markdown. Recommended export commands:</p>
+<p>```bash</p>
+<p>pandoc docs/PayFlow-Complete-Project-Report.md -o docs/PayFlow-Complete-Project-Report.pdf --toc --number-sections</p>
+<p>```</p>
+<p>If Pandoc is unavailable, open the Markdown in VS Code or any Markdown preview tool and use Print to PDF. Mermaid diagrams can be rendered by GitHub, VS Code extensions, or Mermaid-aware documentation tools.</p>
+<p>Recommended PDF settings:</p>
+<ul>
+<li>Page size: A4</li>
+<li>Margins: 0.7 inch</li>
+<li>Font: Calibri, Arial, or Times New Roman</li>
+<li>Heading numbering: enabled</li>
+<li>Table of contents: enabled</li>
+<li>Code blocks: preserve monospace formatting</li>
+<li>Page numbers: footer, centered or right-aligned</li>
+<li>Diagram rendering: enable Mermaid support before export</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li>Project source files under <code>frontend/</code> and <code>demo/</code>.</li>
+<li>Backend configuration: <code>demo/pom.xml</code>, <code>demo/src/main/resources/application.properties</code>.</li>
+<li>Frontend configuration: <code>frontend/package.json</code>, <code>frontend/vite.config.js</code>.</li>
+<li>Project overview: <code>README.md</code>.</li>
+</ul>
+</body>
+</html>
