@@ -8,9 +8,9 @@ import UserAvatar from './UserAvatar.jsx'
 import { apiFetch } from '../api.js'
 
 const NAV_ITEMS = [
+  { to: '/', icon: 'home', labelKey: 'nav.dashboard', end: true },
   { to: '/transactions', icon: 'list', labelKey: 'nav.transactions' },
   { to: '/bills', icon: 'receipt', labelKey: 'nav.bills' },
-  { to: '/', icon: 'home', labelKey: 'nav.dashboard', end: true },
   { to: '/analytics', icon: 'chart', labelKey: 'nav.analytics' },
   { to: '/rewards', icon: 'star', labelKey: 'nav.rewards' },
   { to: '/referral', icon: 'link', labelKey: 'nav.referral' },
