@@ -9,6 +9,7 @@ import payment_system_backend.model.Transaction;
 import payment_system_backend.model.User;
 import payment_system_backend.repository.TransactionRepository;
 import payment_system_backend.repository.UserRepository;
+import payment_system_backend.service.EmailService;
 import payment_system_backend.service.FraudDetectionService;
 import payment_system_backend.service.NotificationService;
 import payment_system_backend.service.TransactionService;
@@ -29,6 +30,7 @@ class TransactionServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private FraudDetectionService fraudDetectionService;
     @Mock private NotificationService notificationService;
+    @Mock private EmailService emailService;
 
     private User sender;
     private User receiver;

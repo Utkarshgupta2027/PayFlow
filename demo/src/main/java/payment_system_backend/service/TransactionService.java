@@ -25,6 +25,9 @@ public class TransactionService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private EmailService emailService;
+
     @Transactional
     public Transaction sendMoney(Long senderId, Long receiverId, double amount, String description) {
 
@@ -105,18 +108,7 @@ public class TransactionService {
                 receiver.getName() + " received ₹" + String.format("%.2f", amount) + " from " + sender.getName(),
                 "SUCCESS");
 
-        notificationService.sendEmail(sender.getEmail(),
-                "PayFlow — Payment Sent",
-                "Hi " + sender.getName() + ",\n\nYou sent ₹" + String.format("%.2f", amount)
-                        + " to " + receiver.getName() + ".\n\nTransaction ID: " + tx.getId()
-                        + "\nRisk Level: " + risk.level
-                        + "\n\nIf this wasn't you, contact support immediately.\n\nPayFlow Team");
-
-        notificationService.sendEmail(receiver.getEmail(),
-                "PayFlow — Money Received",
-                "Hi " + receiver.getName() + ",\n\nYou received ₹" + String.format("%.2f", amount)
-                        + " from " + sender.getName() + ".\n\nTransaction ID: " + tx.getId()
-                        + "\n\nPayFlow Team");
+        emailService.sendTransactionInvoice(sender, receiver, tx);
 
         return tx;
     }

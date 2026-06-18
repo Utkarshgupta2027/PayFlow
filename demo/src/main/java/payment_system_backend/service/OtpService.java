@@ -29,7 +29,7 @@ public class OtpService {
     private String fromPhone;
 
     @Autowired
-    private NotificationService notificationService;
+    private EmailService emailService;
 
     public OtpService(OtpRepository otpRepository) {
         this.otpRepository = otpRepository;
@@ -83,10 +83,7 @@ public class OtpService {
         OtpRecord record = new OtpRecord(email, otp, LocalDateTime.now());
         otpRepository.save(record);
 
-        String subject = "Your PayFlow Email Verification OTP";
-        String body = "Your OTP is: " + otp + "\n\nIt is valid for 5 minutes. Please do not share it with anyone.";
-
-        notificationService.sendEmailAsync(email, subject, body);
+        emailService.sendOtpVerificationMail(email, otp);
 
         return otp;
     }

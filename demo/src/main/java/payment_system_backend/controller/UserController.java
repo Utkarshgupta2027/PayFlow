@@ -50,8 +50,7 @@ public class UserController {
         try {
             validateRegistrationPayload(user);
             
-            // Require OTP for email registration (TEMPORARILY DISABLED)
-            /*
+            // Require OTP for email registration
             if (user.getEmail() != null && !user.getEmail().isBlank()) {
                 if (user.getOtp() == null || user.getOtp().isBlank()) {
                     return ResponseEntity.badRequest().body("OTP is required for email registration");
@@ -61,7 +60,6 @@ public class UserController {
                     return ResponseEntity.badRequest().body("Invalid or expired OTP");
                 }
             }
-            */
 
             User saved = userService.registerUser(user);
             Map<String, Object> response = buildAuthResponse(saved, saved.getEmail());

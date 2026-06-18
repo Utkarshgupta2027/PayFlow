@@ -45,20 +45,17 @@ export default function Register() {
       return setError('Please enter a valid email address.')
     if (password.trim().length < 6) return setError('Password must be at least 6 characters.')
     if (password !== confirmPwd)    return setError('Passwords do not match.')
-    // TEMPORARILY DISABLED OTP VERIFICATION
-    /*
     if (!otp.trim()) {
       if (!otpSent) return setError('Please click "Send OTP" to verify your email first.')
       return setError('Please enter the OTP sent to your email.')
     }
-    */
 
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE}/user/register`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: name.trim(), email: email.trim(), password, otp: otp.trim() || '123456' }),
+        body:    JSON.stringify({ name: name.trim(), email: email.trim(), password, otp: otp.trim() }),
       })
 
       if (!res.ok) {
@@ -163,7 +160,37 @@ export default function Register() {
             </div>
           </div>
 
-          {/* OTP field is temporarily disabled/hidden */}
+          <div>
+            <label className="label">Email OTP</label>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <input
+                id="reg-otp"
+                className="input-field"
+                type="text"
+                inputMode="numeric"
+                placeholder="6-digit OTP"
+                value={otp}
+                maxLength={6}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                style={{ flex: 1 }}
+                required
+              />
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleSendOtp}
+                disabled={sendingOtp || !email.trim()}
+                style={{ width: 'auto', whiteSpace: 'nowrap', paddingInline: '1rem' }}
+              >
+                {sendingOtp ? 'Sending...' : otpSent ? 'Resend OTP' : 'Send OTP'}
+              </button>
+            </div>
+            {otpSent && (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                OTP sent to {email}. It is valid for 5 minutes.
+              </div>
+            )}
+          </div>
 
           {/* Password */}
           <div>
