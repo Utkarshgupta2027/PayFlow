@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import payment_system_backend.model.User;
 import payment_system_backend.repository.UserRepository;
+import payment_system_backend.security.AdminAccess;
 import payment_system_backend.security.JwtUtil;
 
 import javax.sql.DataSource;
@@ -64,53 +65,61 @@ class PaymentSystemBackendApplicationTests {
 	@Test
 	void testAdminRefundsAuthorization() throws Exception {
 		System.out.println("=== STARTING ADMIN REFUNDS AUTHORIZATION TEST ===");
-		// Ensure we have at least one ADMIN user in the database
-		String adminEmail = "admin_test_integration@example.com";
-		User admin = userRepository.findByEmail(adminEmail);
-		if (admin == null) {
-			admin = new User();
-			admin.setName("Integration Admin");
-			admin.setEmail(adminEmail);
-			admin.setPassword("password123");
-			admin.setPhoneNumber("9991112222");
-			admin.setRole("ADMIN");
-			admin = userRepository.save(admin);
-			System.out.println("Created test admin user: " + admin.getEmail());
-		} else {
-			admin.setRole("ADMIN");
-			admin = userRepository.save(admin);
-			System.out.println("Updated existing test admin user to ADMIN role: " + admin.getEmail());
-		}
+		User admin = upsertTestUser(
+				AdminAccess.ADMIN_EMAIL,
+				"Integration Admin",
+				"9991112222",
+				"USER");
+		User fakeAdmin = upsertTestUser(
+				"admin_test_integration@example.com",
+				"Fake Integration Admin",
+				"9991112223",
+				"ADMIN");
 
-		// Generate token
-		String token = jwtUtil.generateToken(adminEmail);
-		System.out.println("Generated JWT token: " + token);
-
-		// Perform HTTP request using HttpClient to the running local port 8080
 		try {
 			HttpClient client = HttpClient.newHttpClient();
-			HttpRequest httpRequest = HttpRequest.newBuilder()
+			HttpRequest allowedRequest = HttpRequest.newBuilder()
 					.uri(URI.create("http://localhost:8080/admin/refunds"))
-					.header("Authorization", "Bearer " + token)
+					.header("Authorization", "Bearer " + jwtUtil.generateToken(AdminAccess.ADMIN_EMAIL))
+					.GET()
+					.build();
+			HttpRequest deniedRequest = HttpRequest.newBuilder()
+					.uri(URI.create("http://localhost:8080/admin/refunds"))
+					.header("Authorization", "Bearer " + jwtUtil.generateToken(fakeAdmin.getEmail()))
 					.GET()
 					.build();
 
-			HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-			System.out.println("HTTP Response Status: " + response.statusCode());
-			System.out.println("HTTP Response Body: " + response.body());
+			HttpResponse<String> allowedResponse = client.send(allowedRequest, HttpResponse.BodyHandlers.ofString());
+			HttpResponse<String> deniedResponse = client.send(deniedRequest, HttpResponse.BodyHandlers.ofString());
+			System.out.println("Allowed admin response status: " + allowedResponse.statusCode());
+			System.out.println("Denied fake admin response status: " + deniedResponse.statusCode());
 			
-			assertEquals(200, response.statusCode(), "Admin request should return 200 OK");
-			System.out.println("SUCCESS: Admin authorization verified. Endpoint /admin/refunds returned 200 OK.");
+			assertEquals(200, allowedResponse.statusCode(), "Configured admin email should return 200 OK");
+			assertEquals(403, deniedResponse.statusCode(), "Any other email must be denied even if its stored role is ADMIN");
+			System.out.println("SUCCESS: Admin authorization is restricted to " + AdminAccess.ADMIN_EMAIL);
 		} catch (AssertionError | Exception e) {
 			System.out.println("FAILURE: Admin authorization failed!");
 			e.printStackTrace();
 			throw e;
 		} finally {
-			// Cleanup
 			userRepository.delete(admin);
-			System.out.println("Cleaned up test admin user.");
+			userRepository.delete(fakeAdmin);
+			System.out.println("Cleaned up test admin users.");
 		}
 		System.out.println("=== END ADMIN REFUNDS AUTHORIZATION TEST ===");
+	}
+
+	private User upsertTestUser(String email, String name, String phoneNumber, String role) {
+		User user = userRepository.findByEmail(email);
+		if (user == null) {
+			user = new User();
+			user.setEmail(email);
+		}
+		user.setName(name);
+		user.setPassword("password123");
+		user.setPhoneNumber(phoneNumber);
+		user.setRole(role);
+		return userRepository.save(user);
 	}
 
 }

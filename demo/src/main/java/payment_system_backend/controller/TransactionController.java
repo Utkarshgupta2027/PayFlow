@@ -9,6 +9,7 @@ import payment_system_backend.model.Transaction;
 import payment_system_backend.model.User;
 import payment_system_backend.repository.TransactionRepository;
 import payment_system_backend.repository.UserRepository;
+import payment_system_backend.security.AdminAccess;
 import payment_system_backend.service.FraudDetectionService;
 import payment_system_backend.service.RewardService;
 import payment_system_backend.service.TransactionService;
@@ -140,7 +141,7 @@ public class TransactionController {
     public List<Transaction> history(@PathVariable("userId") Long userId,
                                      Authentication authentication) {
         User user = currentUser(authentication);
-        if (!user.getId().equals(userId) && !"ADMIN".equals(user.getRole())) {
+        if (!user.getId().equals(userId) && !AdminAccess.isAdminEmail(user.getEmail())) {
             throw new RuntimeException("You can only view your own transaction history");
         }
         List<Transaction> all = new ArrayList<>();

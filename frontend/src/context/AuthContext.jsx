@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from 'react'
 
 const AuthContext = createContext(null)
+const ADMIN_EMAIL = 'gutkarsh702@gmail.com'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -33,7 +34,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('payflow_user', JSON.stringify(updated))
   }
 
-  // Re-fetch user from backend to pick up role/profile changes (e.g. after admin promotion)
+  // Re-fetch user from backend to pick up role/profile changes.
   const refreshUser = async () => {
     if (!user?.id) return
     try {
@@ -53,7 +54,7 @@ export function AuthProvider({ children }) {
   }
 
   // Convenience computed values
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = user?.email?.trim().toLowerCase() === ADMIN_EMAIL && user?.role === 'ADMIN'
   const isLoggedIn = !!user
 
   return (

@@ -6,6 +6,7 @@ import payment_system_backend.model.User;
 import payment_system_backend.model.Transaction;
 import payment_system_backend.repository.TransactionRepository;
 import payment_system_backend.repository.UserRepository;
+import payment_system_backend.security.AdminAccess;
 
 import java.util.*;
 
@@ -27,7 +28,9 @@ public class AdminService {
     // ─── User Management ─────────────────────────────────────────────────────
 
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        List<User> users = userRepository.findAll();
+        users.forEach(this::normalizeStoredRole);
+        return users;
     }
 
     public User blockUser(Long userId) {
@@ -97,5 +100,13 @@ public class AdminService {
         stats.put("flaggedTransactions", flaggedTxns);
         stats.put("pendingRefunds", pendingRefunds);
         return stats;
+    }
+
+    private void normalizeStoredRole(User user) {
+        String expectedRole = AdminAccess.roleForEmail(user.getEmail());
+        if (!expectedRole.equals(user.getRole())) {
+            user.setRole(expectedRole);
+            userRepository.save(user);
+        }
     }
 }

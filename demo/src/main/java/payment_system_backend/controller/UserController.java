@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,12 +15,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import payment_system_backend.dto.LoginRequest;
 import payment_system_backend.model.User;
 import payment_system_backend.repository.UserRepository;
+import payment_system_backend.security.AdminAccess;
 import payment_system_backend.security.JwtUtil;
 import payment_system_backend.service.UserService;
 import payment_system_backend.service.OtpService;
@@ -86,6 +85,7 @@ public class UserController {
 
             // Update last login timestamp
             user.setLastLoginAt(LocalDateTime.now());
+            normalizeStoredRole(user);
             userRepository.save(user);
 
             String token = jwtUtil.generateToken(user.getEmail());
@@ -116,7 +116,10 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable("id") Long id) {
         return userRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .map(user -> {
+                    normalizeStoredRole(user);
+                    return ResponseEntity.ok(user);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -273,26 +276,6 @@ public class UserController {
         return legacyMatch;
     }
 
-    /**
-     * Promote a user to ADMIN. First registered user is already auto-admin;
-     * further promotions require an existing admin JWT.
-     */
-    @PostMapping("/make-admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> makeAdmin(
-            @RequestParam String email) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "User not found: " + email));
-        }
-        user.setRole("ADMIN");
-        userRepository.save(user);
-        return ResponseEntity.ok(Map.of(
-                "message", "User promoted to ADMIN successfully",
-                "email", email,
-                "role", "ADMIN"));
-    }
-
     private void validateRegistrationPayload(User user) {
         if (user == null) {
             throw new RuntimeException("Registration payload is required.");
@@ -330,5 +313,13 @@ public class UserController {
             throw new RuntimeException("Authenticated user not found");
         }
         return user;
+    }
+
+    private void normalizeStoredRole(User user) {
+        String expectedRole = AdminAccess.roleForEmail(user.getEmail());
+        if (!expectedRole.equals(user.getRole())) {
+            user.setRole(expectedRole);
+            userRepository.save(user);
+        }
     }
 }

@@ -53,9 +53,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 }
 
                 if (user != null) {
-                    String role = user.getRole() != null ? user.getRole().trim().toUpperCase() : "USER";
-                    if (role.startsWith("ROLE_")) {
-                        role = role.substring("ROLE_".length());
+                    String role = AdminAccess.roleForEmail(user.getEmail());
+                    if (!role.equals(user.getRole())) {
+                        user.setRole(role);
+                        userRepository.save(user);
                     }
                     var auth = new UsernamePasswordAuthenticationToken(
                             subject,

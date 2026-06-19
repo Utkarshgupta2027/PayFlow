@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import payment_system_backend.model.User;
 import payment_system_backend.repository.UserRepository;
+import payment_system_backend.security.AdminAccess;
 
 import java.util.UUID;
 
@@ -60,11 +61,6 @@ public class UserService {
         } while (userRepository.findByReferralCode(code) != null);
         user.setReferralCode(code);
 
-        // First user ever gets ADMIN role
-        if (userRepository.count() == 0) {
-            user.setRole("ADMIN");
-        } else {
-            user.setRole("USER");
-        }
+        user.setRole(AdminAccess.roleForEmail(user.getEmail()));
     }
 }
