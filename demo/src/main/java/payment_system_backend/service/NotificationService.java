@@ -41,9 +41,6 @@ public class NotificationService {
     @Value("${spring.mail.host:}")
     private String mailHost;
 
-    @Value("${spring.mail.password:}")
-    private String mailPassword;
-
     @Value("${brevo.api.key:}")
     private String brevoApiKey;
 
@@ -120,6 +117,9 @@ public class NotificationService {
         if (!effectiveBrevoApiKey.isBlank()) {
             sendViaBrevoApi(to, subject, body, null, replyTo, null);
             return;
+        }
+        if (isBrevoSmtpHost()) {
+            throw new IllegalStateException("BREVO_API_KEY is required when MAIL_HOST uses Brevo. Brevo SMTP credentials cannot be used as the HTTP API key.");
         }
         if (mailSender == null) {
             throw new IllegalStateException("Mail sender is not configured");
@@ -219,9 +219,6 @@ public class NotificationService {
     private String effectiveBrevoApiKey() {
         if (brevoApiKey != null && !brevoApiKey.isBlank()) {
             return brevoApiKey.trim();
-        }
-        if (isBrevoSmtpHost() && mailPassword != null && !mailPassword.isBlank()) {
-            return mailPassword.trim();
         }
         return "";
     }
