@@ -13,6 +13,12 @@ import payment_system_backend.repository.NotificationRepository;
 import payment_system_backend.repository.UserRepository;
 
 import java.util.List;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class NotificationService {
@@ -31,6 +37,12 @@ public class NotificationService {
 
     @Value("${spring.mail.username:}")
     private String fromEmail;
+
+    @Value("${brevo.api.key:}")
+    private String brevoApiKey;
+
+    @Value("${brevo.sender.email:}")
+    private String brevoSenderEmail;
 
     /**
      * Creates a persistent in-app notification AND pushes it to the user's
@@ -83,7 +95,8 @@ public class NotificationService {
      * Sends an email with an optional replyTo address.
      */
     public void sendEmail(String to, String subject, String body, String replyTo) {
-        if (mailSender == null || to == null || to.isBlank()) return;
+        if (to == null || to.isBlank()) return;
+        if (mailSender == null && (brevoApiKey == null || brevoApiKey.isBlank())) return;
         try {
             sendEmailOrThrow(to, subject, body, replyTo);
         } catch (Exception e) {
@@ -97,6 +110,10 @@ public class NotificationService {
     }
 
     public void sendEmailOrThrow(String to, String subject, String body, String replyTo) throws Exception {
+        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+            sendViaBrevoApi(to, subject, body, null, replyTo, null);
+            return;
+        }
         if (mailSender == null) {
             throw new IllegalStateException("Mail sender is not configured");
         }
@@ -144,6 +161,52 @@ public class NotificationService {
             n.setRead(true);
             notificationRepository.save(n);
         });
+    }
+
+    private void sendViaBrevoApi(String toEmail, String subject, String textContent, String htmlContent, String replyToEmail, List<Map<String, Object>> attachments) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("api-key", brevoApiKey);
+
+        Map<String, Object> sender = new HashMap<>();
+        sender.put("name", "PayFlow");
+        String senderEmail = (brevoSenderEmail != null && !brevoSenderEmail.isBlank()) ? brevoSenderEmail : fromEmail;
+        if (senderEmail == null || senderEmail.isBlank()) {
+            senderEmail = "noreply@payflow.com";
+        }
+        sender.put("email", senderEmail);
+
+        Map<String, String> recipient = new HashMap<>();
+        recipient.put("email", toEmail);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("sender", sender);
+        body.put("to", List.of(recipient));
+        body.put("subject", subject);
+        if (textContent != null) {
+            body.put("textContent", textContent);
+        }
+        if (htmlContent != null) {
+            body.put("htmlContent", htmlContent);
+        }
+        if (replyToEmail != null && !replyToEmail.isBlank()) {
+            Map<String, String> replyTo = new HashMap<>();
+            replyTo.put("email", replyToEmail);
+            body.put("replyTo", replyTo);
+        }
+        if (attachments != null && !attachments.isEmpty()) {
+            body.put("attachment", attachments);
+        }
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+        try {
+            restTemplate.postForObject("https://api.brevo.com/v3/smtp/email", request, String.class);
+        } catch (Exception e) {
+            System.err.println("[NotificationService] Failed to send Brevo HTTP email to " + toEmail + ": " + e.getMessage());
+            throw new RuntimeException("Brevo API send failed: " + e.getMessage(), e);
+        }
     }
 
     public void markAllAsRead(Long userId) {
