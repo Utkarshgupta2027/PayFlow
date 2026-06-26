@@ -22,8 +22,9 @@ USER spring:spring
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Railway injects $PORT at runtime
-ENV PORT=8080
-EXPOSE 8080
+# Render injects PORT=10000 at runtime. Keep the same default locally so the
+# image binds to the port Render health checks even if PORT is not present.
+ENV PORT=10000
+EXPOSE 10000
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java -Djava.security.egd=file:/dev/./urandom -Dserver.port=${PORT:-10000} -jar app.jar"]

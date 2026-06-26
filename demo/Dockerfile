@@ -22,10 +22,11 @@ USER spring:spring
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Railway injects $PORT; default to 8080 locally
-ENV PORT=8080
+# Render injects PORT=10000 at runtime. Keep this default for direct container
+# runs so the image uses the same port Render health checks.
+ENV PORT=10000
 ENV SPRING_PROFILES_ACTIVE=mysql
 
-EXPOSE $PORT
+EXPOSE 10000
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java -Djava.security.egd=file:/dev/./urandom -Dserver.port=${PORT:-10000} -jar app.jar"]
