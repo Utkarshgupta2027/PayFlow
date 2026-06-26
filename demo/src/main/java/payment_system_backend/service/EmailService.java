@@ -19,13 +19,21 @@ public class EmailService {
 
     @Async
     public void sendOtpVerificationMail(String email, String otp) {
+        try {
+            sendOtpVerificationMailOrThrow(email, otp);
+        } catch (Exception e) {
+            System.err.println("[EmailService] OTP email failed for " + email + ": " + e.getMessage());
+        }
+    }
+
+    public void sendOtpVerificationMailOrThrow(String email, String otp) throws Exception {
         String subject = "Your PayFlow OTP Verification Code";
         String body = "Hi,\n\n"
                 + "Your PayFlow verification OTP is " + otp + ".\n\n"
                 + "This code is valid for 5 minutes. Do not share it with anyone.\n\n"
                 + "PayFlow Team";
 
-        notificationService.sendEmail(email, subject, body);
+        notificationService.sendEmailOrThrow(email, subject, body);
     }
 
     @Async

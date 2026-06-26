@@ -77,13 +77,13 @@ public class OtpService {
     /**
      * Generates a 6-digit OTP, saves it, and sends via Email.
      */
-    public String sendEmailOtp(String email) {
+    public String sendEmailOtp(String email) throws Exception {
         String otp = String.format("%06d", new Random().nextInt(1_000_000));
 
         OtpRecord record = new OtpRecord(email, otp, LocalDateTime.now());
         otpRepository.save(record);
 
-        emailService.sendOtpVerificationMail(email, otp);
+        emailService.sendOtpVerificationMailOrThrow(email, otp);
 
         return otp;
     }

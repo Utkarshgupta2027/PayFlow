@@ -38,6 +38,12 @@ public class NotificationService {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
+    @Value("${spring.mail.host:}")
+    private String mailHost;
+
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
+
     @Value("${brevo.api.key:}")
     private String brevoApiKey;
 
@@ -96,7 +102,7 @@ public class NotificationService {
      */
     public void sendEmail(String to, String subject, String body, String replyTo) {
         if (to == null || to.isBlank()) return;
-        if (mailSender == null && (brevoApiKey == null || brevoApiKey.isBlank())) return;
+        if (mailSender == null && effectiveBrevoApiKey().isBlank()) return;
         try {
             sendEmailOrThrow(to, subject, body, replyTo);
         } catch (Exception e) {
@@ -110,7 +116,8 @@ public class NotificationService {
     }
 
     public void sendEmailOrThrow(String to, String subject, String body, String replyTo) throws Exception {
-        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+        String effectiveBrevoApiKey = effectiveBrevoApiKey();
+        if (!effectiveBrevoApiKey.isBlank()) {
             sendViaBrevoApi(to, subject, body, null, replyTo, null);
             return;
         }
@@ -168,7 +175,7 @@ public class NotificationService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("api-key", brevoApiKey);
+        headers.set("api-key", effectiveBrevoApiKey());
 
         Map<String, Object> sender = new HashMap<>();
         sender.put("name", "PayFlow");
@@ -207,6 +214,20 @@ public class NotificationService {
             System.err.println("[NotificationService] Failed to send Brevo HTTP email to " + toEmail + ": " + e.getMessage());
             throw new RuntimeException("Brevo API send failed: " + e.getMessage(), e);
         }
+    }
+
+    private String effectiveBrevoApiKey() {
+        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+            return brevoApiKey.trim();
+        }
+        if (isBrevoSmtpHost() && mailPassword != null && !mailPassword.isBlank()) {
+            return mailPassword.trim();
+        }
+        return "";
+    }
+
+    private boolean isBrevoSmtpHost() {
+        return mailHost != null && mailHost.toLowerCase().contains("brevo");
     }
 
     public void markAllAsRead(Long userId) {

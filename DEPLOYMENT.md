@@ -22,6 +22,8 @@ Optional backend variables:
 
 - `MAIL_HOST`
 - `MAIL_PORT`
+- `BREVO_API_KEY` (recommended on Render if SMTP connections time out)
+- `BREVO_SENDER_EMAIL`
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_PHONE_NUMBER`
