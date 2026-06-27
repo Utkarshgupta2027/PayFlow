@@ -27,6 +27,7 @@ export default function Register() {
   const [showPwd, setShowPwd]         = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError]             = useState('')
+  const [success, setSuccess]         = useState('')
   const [loading, setLoading]         = useState(false)
   const [otp, setOtp]                 = useState('')
   const [otpSent, setOtpSent]         = useState(false)
@@ -38,6 +39,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
 
     if (!name.trim())  return setError('Please enter your full name.')
     if (!email.trim()) return setError('Please enter your email address.')
@@ -81,6 +83,7 @@ export default function Register() {
     }
     setSendingOtp(true)
     setError('')
+    setSuccess('')
     try {
       const res = await fetch(`${API_BASE}/api/email-otp/send`, {
         method: 'POST',
@@ -92,7 +95,7 @@ export default function Register() {
         throw new Error(msg)
       }
       setOtpSent(true)
-      alert('OTP sent successfully to ' + email)
+      setSuccess(`OTP sent successfully to ${email.trim()}.`)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -121,6 +124,7 @@ export default function Register() {
         </div>
 
         {error && <div className="alert-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+        {success && <div className="alert-success" style={{ marginBottom: '1rem' }}>{success}</div>}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Full Name */}
@@ -153,7 +157,7 @@ export default function Register() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={e => { setEmail(e.target.value); setOtpSent(false); }}
+                onChange={e => { setEmail(e.target.value); setOtpSent(false); setSuccess('') }}
                 style={{ paddingLeft: '2.5rem' }}
                 required
               />

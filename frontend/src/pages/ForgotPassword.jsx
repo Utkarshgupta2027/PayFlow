@@ -25,11 +25,13 @@ export default function ForgotPassword() {
   const [step, setStep]               = useState(1) // 1: Email, 2: OTP & New Password
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
+  const [success, setSuccess]         = useState('')
   const navigate = useNavigate()
 
   const handleSendOtp = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return setError('Please enter a valid email address.')
     }
@@ -45,7 +47,7 @@ export default function ForgotPassword() {
         throw new Error(msg)
       }
       setStep(2)
-      alert('OTP sent successfully to ' + email)
+      setSuccess(`OTP sent successfully to ${email.trim()}.`)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -56,6 +58,7 @@ export default function ForgotPassword() {
   const handleResetPassword = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
     if (!otp.trim()) return setError('Please enter the OTP.')
     if (newPassword.length < 6) return setError('Password must be at least 6 characters.')
 
@@ -70,7 +73,7 @@ export default function ForgotPassword() {
         const msg = await extractErrorMessage(res, 'Failed to reset password.')
         throw new Error(msg)
       }
-      alert('Password reset successfully! Please login with your new password.')
+      setSuccess('Password reset successfully. Please login with your new password.')
       navigate('/login')
     } catch (err) {
       setError(err.message)
@@ -92,6 +95,7 @@ export default function ForgotPassword() {
         </div>
 
         {error && <div className="alert-error" style={{ marginBottom: '1rem' }}>{error}</div>}
+        {success && <div className="alert-success" style={{ marginBottom: '1rem' }}>{success}</div>}
 
         {step === 1 ? (
           <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
