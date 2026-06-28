@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { startKeepAlive, stopKeepAlive } from './utils/keepAlive'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { LanguageProvider } from './context/LanguageContext.jsx'
@@ -41,6 +43,12 @@ function PublicRoute({ children }) {
 }
 
 export default function App() {
+  // Keep Render server alive — ping /healthz every 9 minutes
+  useEffect(() => {
+    startKeepAlive()
+    return () => stopKeepAlive()
+  }, [])
+
   return (
     <ThemeProvider>
       <LanguageProvider>
