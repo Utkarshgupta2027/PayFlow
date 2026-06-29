@@ -3,6 +3,8 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import API_BASE, { apiFetch } from '../api.js'
 import { generateReceipt } from '../utils/generateReceipt.js'
+// ── PWA Install Button — shows only when installation is available ──────────
+import InstallButton from '../components/InstallButton.jsx'
 
 function fmtCurrency(n) {
   return '₹' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -382,6 +384,13 @@ export default function Dashboard() {
           </button>
         ))}
       </div>
+
+      {/* ── PWA Install Button ──────────────────────────────────────────────
+          Renders only when the browser fires `beforeinstallprompt` (i.e.
+          installation is available and the app is not yet installed).
+          Placed here: below Quick Actions, above Recent Transactions.
+      ────────────────────────────────────────────────────────────────────── */}
+      <InstallButton />
 
       {/* Recent Transactions */}
       <div className="card animate-slide-up">

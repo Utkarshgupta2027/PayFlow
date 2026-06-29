@@ -1,0 +1,221 @@
+/**
+ * InstallButton.css
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Styles for the PayFlow PWA Install Button component.
+ * Matches the PayFlow dark-blue fintech branding.
+ *
+ * Design tokens used:
+ *   --pf-install-from : gradient start (#1e6fdc)
+ *   --pf-install-to   : gradient end   (#0b3f8c)
+ *   --pf-install-glow : box-shadow glow
+ *
+ * Supports dark mode via the [data-theme="dark"] attribute that
+ * PayFlow's ThemeContext applies to <html>.
+ */
+
+/* ── Wrapper ────────────────────────────────────────────────────────────────── */
+.install-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Spacing so it breathes between the CTA section and feature cards */
+  margin: 1.25rem 0 0.5rem;
+  /* Animate in from below when it becomes visible */
+  animation: installBtnFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Core button ─────────────────────────────────────────────────────────────── */
+.install-btn {
+  /* Layout */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  overflow: hidden;           /* Needed for ripple containment */
+
+  /* Sizing */
+  padding: 0.85rem 2rem;
+  min-width: 200px;
+  border: none;
+  border-radius: 9999px;      /* Pill shape */
+
+  /* Gradient — PayFlow navy-to-blue */
+  background: linear-gradient(135deg, #1e6fdc 0%, #0b3f8c 100%);
+
+  /* Typography */
+  color: #ffffff;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+
+  /* Elevation */
+  box-shadow:
+    0 4px 18px rgba(30, 111, 220, 0.45),
+    0 1px 4px rgba(0, 0, 0, 0.25);
+
+  cursor: pointer;
+
+  /* Base transition */
+  transition:
+    transform       0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow      0.22s ease,
+    background      0.22s ease,
+    opacity         0.22s ease;
+
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ── Install icon (SVG wrapper) ─────────────────────────────────────────────── */
+.install-btn-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  /* Slight bounce on hover via parent transform */
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Button label text ──────────────────────────────────────────────────────── */
+.install-btn-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Hover state ────────────────────────────────────────────────────────────── */
+.install-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 8px 28px rgba(30, 111, 220, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #2d7de8 0%, #0f4fac 100%);
+}
+
+.install-btn:hover:not(:disabled) .install-btn-icon {
+  transform: translateY(-2px);
+}
+
+/* ── Active / pressed state ─────────────────────────────────────────────────── */
+.install-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  box-shadow:
+    0 2px 10px rgba(30, 111, 220, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Disabled / loading state ───────────────────────────────────────────────── */
+.install-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* ── Ripple effect ──────────────────────────────────────────────────────────── */
+.install-btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  transform: scale(0);
+  animation: rippleExpand 0.55s ease-out forwards;
+  /* Width/Height and top/left set dynamically via JS */
+}
+
+/* ── Installed (success) state ─────────────────────────────────────────────── */
+.install-btn.installed {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow:
+    0 4px 18px rgba(5, 150, 105, 0.4),
+    0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: default;
+  transform: none;
+  pointer-events: none;
+}
+
+.install-btn.installed:hover {
+  transform: none;
+  box-shadow:
+    0 4px 18px rgba(5, 150, 105, 0.4),
+    0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Loading spinner ────────────────────────────────────────────────────────── */
+.install-btn-spinner {
+  display: inline-flex;
+  align-items: center;
+  animation: spinCw 0.8s linear infinite;
+}
+
+/* ── Checkmark success icon ─────────────────────────────────────────────────── */
+.install-btn-check {
+  display: inline-flex;
+  align-items: center;
+  animation: checkPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   KEYFRAMES
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Button entrance animation */
+@keyframes installBtnFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ripple expansion */
+@keyframes rippleExpand {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Spinner rotation */
+@keyframes spinCw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Checkmark pop-in */
+@keyframes checkPop {
+  0%   { transform: scale(0) rotate(-15deg); }
+  70%  { transform: scale(1.2) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DARK MODE
+   PayFlow's ThemeContext sets data-theme="dark" on <html>.
+───────────────────────────────────────────────────────────────────────────── */
+[data-theme='dark'] .install-btn {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  box-shadow:
+    0 4px 20px rgba(37, 99, 235, 0.5),
+    0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .install-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow:
+    0 8px 30px rgba(37, 99, 235, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .install-btn {
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
