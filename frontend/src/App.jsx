@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { startKeepAlive, stopKeepAlive } from './utils/keepAlive'
+import ServerWakeNotice from './components/ServerWakeNotice.jsx'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { LanguageProvider } from './context/LanguageContext.jsx'
@@ -52,6 +53,8 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
+        {/* Shows a banner when the Render server is cold-starting */}
+        <ServerWakeNotice />
         <AuthProvider>
           <BrowserRouter>
             <Routes>
