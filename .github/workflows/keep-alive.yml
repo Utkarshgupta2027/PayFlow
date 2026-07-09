@@ -1,0 +1,44 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Keep-Alive Workflow
+# ─────────────────────────────────────────────────────────────────────────────
+# Render free tier shuts down after 15 minutes of inactivity.
+# This workflow pings /healthz every 9 minutes — 24/7 — so the server
+# is ALWAYS warm, even when zero users are on the site.
+#
+# GitHub Actions cron minimum granularity is 5 minutes.
+# We use */9 which fires at: 0, 9, 18, 27, 36, 45, 54 past each hour.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: 🟢 Server Keep-Alive
+
+on:
+  schedule:
+    # Every 9 minutes — well under Render's 15-min sleep threshold
+    - cron: '*/9 * * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  ping:
+    name: Ping Backend Health Endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: 🏓 Ping /healthz
+        run: |
+          echo "Pinging backend at $(date -u)"
+          STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 5 \
+            "https://payflow-backend-d89c8i7avr4c73ch7l80.onrender.com/healthz")
+
+          echo "HTTP Status: $STATUS"
+
+          if [ "$STATUS" -eq 200 ]; then
+            echo "✅ Server is awake and healthy."
+          elif [ "$STATUS" -eq 000 ]; then
+            echo "⚠️ Server is waking up (cold start) — no response yet. Will retry next cycle."
+          else
+            echo "⚠️ Unexpected status: $STATUS"
+          fi
