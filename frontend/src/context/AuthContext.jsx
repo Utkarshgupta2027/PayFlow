@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { setLogoutCallback } from '../api.js'
 
 const AuthContext = createContext(null)
 const ADMIN_EMAIL = 'gutkarsh702@gmail.com'
@@ -28,6 +29,11 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('payflow_refresh_token')
     localStorage.removeItem('payflow_daily_bonus_date')
   }
+
+  // Register with apiFetch so 403 (stale token after cold-start) auto-logs out
+  useEffect(() => {
+    setLogoutCallback(logout)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateUser = (updated) => {
     setUser(updated)

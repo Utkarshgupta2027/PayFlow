@@ -1,5 +1,21 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
+// ── Global 403 handler ──────────────────────────────────────────────────────
+// When the Render server cold-starts, the JWT secret is fresh — old tokens
+// stored in localStorage are now invalid and the backend returns 403.
+// We clear stale credentials and redirect to /login automatically.
+let _logoutCallback = null
+export function setLogoutCallback(fn) { _logoutCallback = fn }
+
+function handleStaleSession() {
+  localStorage.removeItem('payflow_token')
+  localStorage.removeItem('payflow_refresh_token')
+  localStorage.removeItem('payflow_user')
+  if (_logoutCallback) _logoutCallback()
+  // Hard redirect so React state is fully reset
+  window.location.replace('/login')
+}
+
 /**
  * Wrapper around fetch that automatically adds the JWT Authorization header
  * and handles JSON parsing + error responses.
@@ -23,6 +39,13 @@ export async function apiFetch(path, options = {}) {
       const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` }
       return fetch(`${API_BASE}${path}`, { ...options, headers: retryHeaders })
     }
+    // Refresh also failed — session is fully stale
+    handleStaleSession()
+  }
+
+  // Handle 403 — token exists but backend rejects it (cold-start / key rotation)
+  if (res.status === 403) {
+    handleStaleSession()
   }
 
   return res
