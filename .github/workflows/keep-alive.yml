@@ -2,19 +2,27 @@
 # Keep-Alive Workflow
 # ─────────────────────────────────────────────────────────────────────────────
 # Render free tier shuts down after 15 minutes of inactivity.
-# This workflow pings /healthz every 9 minutes — 24/7 — so the server
+# This workflow pings /healthz every 5 minutes — 24/7 — so the server
 # is ALWAYS warm, even when zero users are on the site.
 #
-# GitHub Actions cron minimum granularity is 5 minutes.
-# We use */9 which fires at: 0, 9, 18, 27, 36, 45, 54 past each hour.
+# WHY */5 and NOT */9?
+#   GitHub Actions cron minimum granularity is 5 minutes.
+#   */9 produces this pattern each hour: 0, 9, 18, 27, 36, 45, 54 …
+#   The gap from minute 54 → next hour's 0 is only 6 min — looks fine,
+#   BUT GitHub Actions runners can be delayed by 5–10 min during high load.
+#   A delayed */9 job + runner queue delay can easily breach Render's 15-min
+#   inactivity window. */5 gives us a 5-min fire rate → even a 10-min delay
+#   still pings within 15 minutes, keeping the server warm reliably.
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: 🟢 Server Keep-Alive
 
 on:
   schedule:
-    # Every 9 minutes — well under Render's 15-min sleep threshold
-    - cron: '*/9 * * * *'
+    # Every 5 minutes — well under Render's 15-min sleep threshold.
+    # Even if GitHub Actions delays a run by 5-10min, we still stay within
+    # the safety margin and the server never sleeps.
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Allow manual trigger from GitHub Actions UI
 
 jobs:
@@ -26,19 +34,37 @@ jobs:
     steps:
       - name: 🏓 Ping /healthz
         run: |
-          echo "Pinging backend at $(date -u)"
-          STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+          BACKEND_URL="https://payflow-backend-d89c8i7avr4c73ch7l80.onrender.com"
+          ENDPOINT="${BACKEND_URL}/healthz"
+
+          echo "⏱️  $(date -u '+%Y-%m-%d %H:%M:%S UTC') — Pinging ${ENDPOINT}"
+
+          # --retry-all-errors: retry on any transient network error
+          # --max-time 30: allow up to 30s for Render cold-start to respond
+          # --retry 3 / --retry-delay 5: up to 3 retries, 5s apart
+          STATUS=$(curl --silent \
+            --output /dev/null \
+            --write-out "%{http_code}" \
             --max-time 30 \
-            --retry 2 \
+            --retry 3 \
             --retry-delay 5 \
-            "https://payflow-backend-d89c8i7avr4c73ch7l80.onrender.com/healthz")
+            --retry-all-errors \
+            "${ENDPOINT}")
 
-          echo "HTTP Status: $STATUS"
+          echo "📡 HTTP Status: ${STATUS}"
 
-          if [ "$STATUS" -eq 200 ]; then
+          if [ "${STATUS}" -eq 200 ]; then
             echo "✅ Server is awake and healthy."
-          elif [ "$STATUS" -eq 000 ]; then
-            echo "⚠️ Server is waking up (cold start) — no response yet. Will retry next cycle."
+            exit 0
+          elif [ "${STATUS}" -eq 000 ]; then
+            # 000 = no response yet (server is mid cold-start).
+            # This is expected occasionally — NOT a failure.
+            echo "⏳ Server is cold-starting (no HTTP response). It will be warm for the next ping."
+            exit 0
+          elif [ "${STATUS}" -ge 500 ]; then
+            echo "⚠️  Server returned ${STATUS} — may be restarting. Will self-recover."
+            exit 0
           else
-            echo "⚠️ Unexpected status: $STATUS"
+            echo "❌ Unexpected status: ${STATUS}"
+            exit 1
           fi

@@ -12,12 +12,17 @@
  *     so the server never gets a full 15-min silence window.
  *  4. Exposes `onStatusChange` so UI components can
  *     show a "Server waking up…" banner to the user.
+ *  5. Retries failed pings with exponential back-off
+ *     (up to 3 retries) so transient network errors
+ *     don't leave the wake-banner permanently visible.
  *
  * Start this once when the app mounts.
  */
 
 const PING_INTERVAL_MS    = 9 * 60 * 1000  // 9 minutes — under Render's 15-min timeout
 const REPING_THRESHOLD_MS = 8 * 60 * 1000  // Re-ping on tab focus if away for 8+ min
+const COLD_START_DELAY_MS = 1_200          // Show banner after 1.2s with no response
+const MAX_RETRIES         = 3              // Max retry attempts on network failure
 const BASE_URL            = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 const HEALTH_ENDPOINT     = `${BASE_URL}/healthz`
 
@@ -56,15 +61,16 @@ export function getServerStatus() {
 // ── Core ping logic ──────────────────────────────────────────────────────────
 
 /**
- * Sends a single ping to the health endpoint.
- * If the response takes >1s, marks the server as 'waking'
+ * Sends a single ping to the health endpoint with retry support.
+ * If the response takes >1.2s, marks the server as 'waking'
  * so the UI can show a loading indicator.
+ * @param {number} attempt - Current retry attempt (0-indexed)
  */
-async function pingServer() {
+async function pingServer(attempt = 0) {
   lastPingTime = Date.now()
 
-  // If no response within 1s → server is likely cold-starting
-  const wakeTimer = setTimeout(() => setStatus('waking'), 1000)
+  // If no response within COLD_START_DELAY_MS → server is likely cold-starting
+  const wakeTimer = setTimeout(() => setStatus('waking'), COLD_START_DELAY_MS)
 
   try {
     const res = await fetch(HEALTH_ENDPOINT, {
@@ -80,11 +86,22 @@ async function pingServer() {
         console.log(`[KeepAlive] ✅ Server awake — ${res.status} @ ${new Date().toLocaleTimeString()}`)
       }
     }
-  } catch {
+  } catch (err) {
     clearTimeout(wakeTimer)
-    // Don't flip status on error — server might just be mid-restart
-    if (import.meta.env.DEV) {
-      console.warn('[KeepAlive] ⚠️ Ping failed — server may be restarting')
+
+    // Retry with exponential back-off (1s, 2s, 4s)
+    if (attempt < MAX_RETRIES) {
+      const delay = Math.pow(2, attempt) * 1000
+      if (import.meta.env.DEV) {
+        console.warn(`[KeepAlive] ⚠️ Ping failed (attempt ${attempt + 1}/${MAX_RETRIES}) — retrying in ${delay}ms`)
+      }
+      setTimeout(() => pingServer(attempt + 1), delay)
+    } else {
+      // All retries exhausted — server may be restarting; keep banner visible
+      // but don't crash. Status will self-recover on next successful ping.
+      if (import.meta.env.DEV) {
+        console.warn('[KeepAlive] ❌ All retries exhausted — server unreachable. Will retry next cycle.')
+      }
     }
   }
 }
