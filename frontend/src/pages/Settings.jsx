@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useOutletContext } from 'react-router-dom'
 import API_BASE, { apiFetch } from '../api.js'
 import UserAvatar from '../components/UserAvatar.jsx'
@@ -30,7 +30,9 @@ export default function Settings() {
   const { theme, changeTheme } = useTheme()
   const { language, languages, changeLanguage, t } = useLanguage()
   const navigate = useNavigate()
+  const location = useLocation()
   const { setToast } = useOutletContext()
+  const pinSectionRef = useRef(null)
 
   // Bank accounts
   const [accounts, setAccounts] = useState([])
@@ -86,6 +88,20 @@ export default function Settings() {
       .then(d => { if (d) setPinSet(!!d.pinSet) })
       .catch(() => {})
   }, [user?.id])
+
+  // Auto-open PIN form when navigated here with { state: { openPin: true } }
+  // e.g. from CheckBalance when the user hasn't set a PIN yet.
+  useEffect(() => {
+    if (location.state?.openPin) {
+      setShowPinForm(true)
+      // Give the DOM a tick to render the form before scrolling
+      setTimeout(() => {
+        pinSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 150)
+      // Clear the state so a manual page refresh doesn't re-trigger this
+      window.history.replaceState({}, '', location.pathname)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSavePin = async (e) => {
     e.preventDefault()
@@ -602,7 +618,7 @@ export default function Settings() {
       </div>
 
       {/* ════════════ TRANSACTION PIN ════════════ */}
-      <div className="settings-section" style={{ marginBottom: '1rem' }}>
+      <div ref={pinSectionRef} className="settings-section" style={{ marginBottom: '1rem' }}>
         <div className="settings-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>🔐 Transaction PIN</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

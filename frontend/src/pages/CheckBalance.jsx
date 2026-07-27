@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { apiFetch } from '../api.js'
 
@@ -13,6 +13,32 @@ export default function CheckBalance() {
   const [balance, setBalance] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // null = checking, false = not set, true = set
+  const [pinReady, setPinReady] = useState(null)
+
+  // Check whether the user has a Transaction PIN before showing the form.
+  // If not set, redirect them straight to Settings → PIN section.
+  useEffect(() => {
+    apiFetch('/user/pin-status')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d || !d.pinSet) {
+          setToast?.({
+            type: 'warning',
+            icon: '🔐',
+            message: 'Set a Transaction PIN first to check your balance.',
+            duration: 3500,
+          })
+          // Small delay so the toast is visible before navigating
+          setTimeout(() => {
+            navigate('/settings', { state: { openPin: true }, replace: true })
+          }, 800)
+        } else {
+          setPinReady(true)
+        }
+      })
+      .catch(() => setPinReady(true)) // On network error, let them try anyway
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -43,6 +69,22 @@ export default function CheckBalance() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show a loading skeleton while we're checking the PIN status
+  if (pinReady === null) {
+    return (
+      <div className="animate-fade-in" style={{ maxWidth: '520px' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Check Balance</h1>
+        </div>
+        <div className="card" style={{ textAlign: 'center', padding: '2.5rem 1.5rem', color: 'var(--text-faint)' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🔐</div>
+          <div style={{ fontWeight: 600, marginBottom: '0.375rem' }}>Checking your PIN status…</div>
+          <div style={{ fontSize: '0.8125rem' }}>You'll be redirected if you haven't set a PIN yet.</div>
+        </div>
+      </div>
+    )
   }
 
   return (
