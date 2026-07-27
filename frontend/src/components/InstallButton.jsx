@@ -245,39 +245,28 @@ export default function InstallButton() {
 
   /**
    * Hide the button entirely if:
-   *  - The app is already installed (isInstalled && !showing success briefly)
-   *  - No install prompt is available (e.g., not on Chrome/Edge, or already installed)
-   *
-   * Exception: keep visible to show the installed success state.
+   *  - The app is already installed (running in standalone / PWA mode).
+   *  - No install prompt is available (browser doesn't support it, or criteria
+   *    aren't met yet).
+   * Show ONLY when a deferred prompt is captured AND the app is not installed.
    */
-  if (!deferredPrompt && !isInstalled) {
-    // Browser hasn't fired beforeinstallprompt yet (or it's not supported).
+  if (isInstalled || !deferredPrompt) {
+    // Already installed or install not available — render nothing.
     return null
   }
 
-  // Determine current visual state
-  const buttonClass = [
-    'install-btn',
-    isInstalled ? 'installed' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
 
   return (
     <div className="install-btn-wrapper" role="complementary" aria-label="Install PayFlow app">
       <button
         ref={buttonRef}
         id="pwa-install-button"
-        className={buttonClass}
+        className="install-btn"
         onClick={handleInstallClick}
-        disabled={isLoading || isInstalled}
-        aria-label={isInstalled ? 'PayFlow Installed' : 'Install PayFlow as an app'}
+        disabled={isLoading}
+        aria-label="Install PayFlow as an app"
         aria-live="polite"
-        title={
-          isInstalled
-            ? 'PayFlow is already installed on your device'
-            : 'Install PayFlow for a faster, native-like experience'
-        }
+        title="Install PayFlow for a faster, native-like experience"
       >
         {/* Ripple layers (rendered behind content via z-index in CSS) */}
         {ripples.map((ripple) => (
@@ -293,28 +282,17 @@ export default function InstallButton() {
           />
         ))}
 
-        {/* Icon: spinner while loading, check when installed, download by default */}
-        <span
-          className={
-            isLoading
-              ? 'install-btn-icon install-btn-spinner'
-              : isInstalled
-              ? 'install-btn-icon install-btn-check'
-              : 'install-btn-icon'
-          }
-        >
-          {isLoading ? <SpinnerIcon /> : isInstalled ? <CheckIcon /> : <DownloadIcon />}
+        {/* Icon: spinner while installing, download by default */}
+        <span className={isLoading ? 'install-btn-icon install-btn-spinner' : 'install-btn-icon'}>
+          {isLoading ? <SpinnerIcon /> : <DownloadIcon />}
         </span>
 
         {/* Label text */}
         <span className="install-btn-label">
-          {isLoading
-            ? 'Installing…'
-            : isInstalled
-            ? '✓ PayFlow Installed'
-            : 'Install PayFlow'}
+          {isLoading ? 'Installing…' : 'Install PayFlow'}
         </span>
       </button>
     </div>
   )
 }
+
