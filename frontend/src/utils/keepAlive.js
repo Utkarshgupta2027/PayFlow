@@ -21,7 +21,7 @@
 
 const PING_INTERVAL_MS    = 9 * 60 * 1000  // 9 minutes — under Render's 15-min timeout
 const REPING_THRESHOLD_MS = 8 * 60 * 1000  // Re-ping on tab focus if away for 8+ min
-const COLD_START_DELAY_MS = 1_200          // Show banner after 1.2s with no response
+const COLD_START_DELAY_MS = 5_000          // Show banner only after 5s with no response
 const MAX_RETRIES         = 3              // Max retry attempts on network failure
 const BASE_URL            = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 const HEALTH_ENDPOINT     = `${BASE_URL}/healthz`

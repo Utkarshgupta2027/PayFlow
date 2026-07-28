@@ -7,12 +7,15 @@
 #
 # WHY */5 and NOT */9?
 #   GitHub Actions cron minimum granularity is 5 minutes.
-#   */9 produces this pattern each hour: 0, 9, 18, 27, 36, 45, 54 …
-#   The gap from minute 54 → next hour's 0 is only 6 min — looks fine,
-#   BUT GitHub Actions runners can be delayed by 5–10 min during high load.
-#   A delayed */9 job + runner queue delay can easily breach Render's 15-min
-#   inactivity window. */5 gives us a 5-min fire rate → even a 10-min delay
+#   */9 produces gaps where runner queue delays can breach Render's 15-min
+#   inactivity window. */5 gives us a 5-min fire rate — even a 10-min delay
 #   still pings within 15 minutes, keeping the server warm reliably.
+#
+# SELF-HEALING:
+#   GitHub automatically DISABLES scheduled workflows after 60 days of
+#   repository inactivity (no commits). The `keepalive` job below uses
+#   peter-evans/workflow-keepalive to automatically re-enable this workflow
+#   whenever GitHub tries to disable it, so pings NEVER stop.
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: 🟢 Server Keep-Alive
@@ -26,10 +29,21 @@ on:
   workflow_dispatch: # Allow manual trigger from GitHub Actions UI
 
 jobs:
+  # ── Self-healing: prevent GitHub from disabling this scheduled workflow ─────
+  keepalive:
+    name: Keep Workflow Active
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: peter-evans/workflow-keepalive@v3
+
+  # ── Ping the Render backend to prevent cold starts ─────────────────────────
   ping:
     name: Ping Backend Health Endpoint
     runs-on: ubuntu-latest
     timeout-minutes: 2
+    needs: keepalive
 
     steps:
       - name: 🏓 Ping /healthz
@@ -40,14 +54,14 @@ jobs:
           echo "⏱️  $(date -u '+%Y-%m-%d %H:%M:%S UTC') — Pinging ${ENDPOINT}"
 
           # --retry-all-errors: retry on any transient network error
-          # --max-time 30: allow up to 30s for Render cold-start to respond
-          # --retry 3 / --retry-delay 5: up to 3 retries, 5s apart
+          # --max-time 60: allow up to 60s for Render cold-start to respond
+          # --retry 3 / --retry-delay 10: up to 3 retries, 10s apart
           STATUS=$(curl --silent \
             --output /dev/null \
             --write-out "%{http_code}" \
-            --max-time 30 \
+            --max-time 60 \
             --retry 3 \
-            --retry-delay 5 \
+            --retry-delay 10 \
             --retry-all-errors \
             "${ENDPOINT}")
 
