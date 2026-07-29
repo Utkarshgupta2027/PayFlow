@@ -17,6 +17,9 @@
 #   the GitHub REST API directly to re-enable this workflow whenever GitHub
 #   tries to disable it, so pings NEVER stop.
 #   (Replaced peter-evans/workflow-keepalive which is no longer maintained.)
+#
+# JOBS RUN IN PARALLEL — ping does NOT depend on keepalive.
+# Even if one job fails, the other still runs.
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: 🟢 Server Keep-Alive
@@ -30,7 +33,54 @@ on:
   workflow_dispatch: # Allow manual trigger from GitHub Actions UI
 
 jobs:
+  # ── Ping the Render backend to prevent cold starts ─────────────────────────
+  # This job runs INDEPENDENTLY — not blocked by keepalive job.
+  ping:
+    name: Ping Backend Health Endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: 🏓 Ping /healthz
+        run: |
+          BACKEND_URL="https://payflow-backend-d89c8i7avr4c73ch7l80.onrender.com"
+          ENDPOINT="${BACKEND_URL}/healthz"
+
+          echo "⏱️  $(date -u '+%Y-%m-%d %H:%M:%S UTC') — Pinging ${ENDPOINT}"
+
+          # Render free tier can take 50+ seconds to cold-start.
+          # --max-time 90: allow up to 90s for the cold-start wake-up call.
+          # --retry 3 / --retry-delay 15: up to 3 retries, 15s apart.
+          # --retry-all-errors: retry on any transient network error.
+          STATUS=$(curl --silent \
+            --output /dev/null \
+            --write-out "%{http_code}" \
+            --max-time 90 \
+            --retry 3 \
+            --retry-delay 15 \
+            --retry-all-errors \
+            "${ENDPOINT}")
+
+          echo "📡 HTTP Status: ${STATUS}"
+
+          if [ "${STATUS}" -eq 200 ]; then
+            echo "✅ Server is awake and healthy."
+            exit 0
+          elif [ "${STATUS}" -eq 000 ]; then
+            # 000 = no response yet (server is mid cold-start).
+            # This is expected occasionally — NOT a failure.
+            echo "⏳ Server is cold-starting (no HTTP response). It will be warm for the next ping."
+            exit 0
+          elif [ "${STATUS}" -ge 500 ]; then
+            echo "⚠️  Server returned ${STATUS} — may be restarting. Will self-recover."
+            exit 0
+          else
+            echo "❌ Unexpected status: ${STATUS}"
+            exit 1
+          fi
+
   # ── Self-healing: prevent GitHub from disabling this scheduled workflow ─────
+  # Runs in PARALLEL with ping — completely independent.
   keepalive:
     name: Keep Workflow Active
     runs-on: ubuntu-latest
@@ -61,51 +111,4 @@ jobs:
             echo "✅ Workflow re-enabled successfully."
           else
             echo "✅ Workflow is already active (state: ${STATE}). No action needed."
-          fi
-
-  # ── Ping the Render backend to prevent cold starts ─────────────────────────
-  ping:
-    name: Ping Backend Health Endpoint
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    # Run ping independently — even if keepalive has issues, server must be pinged
-    if: always()
-    needs: keepalive
-
-    steps:
-      - name: 🏓 Ping /healthz
-        run: |
-          BACKEND_URL="https://payflow-backend-d89c8i7avr4c73ch7l80.onrender.com"
-          ENDPOINT="${BACKEND_URL}/healthz"
-
-          echo "⏱️  $(date -u '+%Y-%m-%d %H:%M:%S UTC') — Pinging ${ENDPOINT}"
-
-          # --retry-all-errors: retry on any transient network error
-          # --max-time 60: allow up to 60s for Render cold-start to respond
-          # --retry 3 / --retry-delay 10: up to 3 retries, 10s apart
-          STATUS=$(curl --silent \
-            --output /dev/null \
-            --write-out "%{http_code}" \
-            --max-time 60 \
-            --retry 3 \
-            --retry-delay 10 \
-            --retry-all-errors \
-            "${ENDPOINT}")
-
-          echo "📡 HTTP Status: ${STATUS}"
-
-          if [ "${STATUS}" -eq 200 ]; then
-            echo "✅ Server is awake and healthy."
-            exit 0
-          elif [ "${STATUS}" -eq 000 ]; then
-            # 000 = no response yet (server is mid cold-start).
-            # This is expected occasionally — NOT a failure.
-            echo "⏳ Server is cold-starting (no HTTP response). It will be warm for the next ping."
-            exit 0
-          elif [ "${STATUS}" -ge 500 ]; then
-            echo "⚠️  Server returned ${STATUS} — may be restarting. Will self-recover."
-            exit 0
-          else
-            echo "❌ Unexpected status: ${STATUS}"
-            exit 1
           fi
