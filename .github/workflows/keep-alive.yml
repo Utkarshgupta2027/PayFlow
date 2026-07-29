@@ -14,8 +14,9 @@
 # SELF-HEALING:
 #   GitHub automatically DISABLES scheduled workflows after 60 days of
 #   repository inactivity (no commits). The `keepalive` job below uses
-#   peter-evans/workflow-keepalive to automatically re-enable this workflow
-#   whenever GitHub tries to disable it, so pings NEVER stop.
+#   the GitHub REST API directly to re-enable this workflow whenever GitHub
+#   tries to disable it, so pings NEVER stop.
+#   (Replaced peter-evans/workflow-keepalive which is no longer maintained.)
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: 🟢 Server Keep-Alive
@@ -36,13 +37,39 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: peter-evans/workflow-keepalive@v3
+      - name: 🔄 Re-enable workflow via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          WORKFLOW_FILE="keep-alive.yml"
+
+          echo "Checking if workflow is enabled..."
+          STATE=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${REPO}/actions/workflows/${WORKFLOW_FILE} \
+            --jq '.state')
+
+          echo "Current workflow state: ${STATE}"
+
+          if [ "${STATE}" = "disabled_inactivity" ] || [ "${STATE}" = "disabled_manually" ]; then
+            echo "⚠️  Workflow is disabled. Re-enabling..."
+            gh api \
+              --method PUT \
+              -H "Accept: application/vnd.github+json" \
+              /repos/${REPO}/actions/workflows/${WORKFLOW_FILE}/enable
+            echo "✅ Workflow re-enabled successfully."
+          else
+            echo "✅ Workflow is already active (state: ${STATE}). No action needed."
+          fi
 
   # ── Ping the Render backend to prevent cold starts ─────────────────────────
   ping:
     name: Ping Backend Health Endpoint
     runs-on: ubuntu-latest
     timeout-minutes: 2
+    # Run ping independently — even if keepalive has issues, server must be pinged
+    if: always()
     needs: keepalive
 
     steps:
