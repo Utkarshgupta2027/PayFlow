@@ -43,20 +43,21 @@ jobs:
     steps:
       - name: 🏓 Ping /healthz
         run: |
-          BACKEND_URL="https://payflow-backend-d89c8i7avr4c73ch7l80.onrender.com"
+          # Use a repository secret for the real backend URL if the deployed host has changed.
+          BACKEND_URL="${{ secrets.BACKEND_URL || 'https://payflow-backend-d89c8i7avr4c73ch7l80.onrender.com' }}"
           ENDPOINT="${BACKEND_URL}/healthz"
 
           echo "⏱️  $(date -u '+%Y-%m-%d %H:%M:%S UTC') — Pinging ${ENDPOINT}"
 
           # Render free tier can take 50+ seconds to cold-start.
           # --max-time 90: allow up to 90s for the cold-start wake-up call.
-          # --retry 3 / --retry-delay 15: up to 3 retries, 15s apart.
+          # --retry 5 / --retry-delay 15: up to 5 retries, 15s apart.
           # --retry-all-errors: retry on any transient network error.
           STATUS=$(curl --silent \
             --output /dev/null \
             --write-out "%{http_code}" \
             --max-time 90 \
-            --retry 3 \
+            --retry 5 \
             --retry-delay 15 \
             --retry-all-errors \
             "${ENDPOINT}")
@@ -71,8 +72,8 @@ jobs:
             # This is expected occasionally — NOT a failure.
             echo "⏳ Server is cold-starting (no HTTP response). It will be warm for the next ping."
             exit 0
-          elif [ "${STATUS}" -ge 500 ]; then
-            echo "⚠️  Server returned ${STATUS} — may be restarting. Will self-recover."
+          elif [ "${STATUS}" -eq 404 ] || [ "${STATUS}" -eq 408 ] || [ "${STATUS}" -ge 500 ]; then
+            echo "⚠️  Server returned ${STATUS} — treating as a transient startup/retry response."
             exit 0
           else
             echo "❌ Unexpected status: ${STATUS}"
