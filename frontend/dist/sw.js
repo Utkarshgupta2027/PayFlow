@@ -12,7 +12,7 @@
  *  - Only static build assets are cached (HTML, CSS, JS, images, fonts).
  */
 
-const CACHE_NAME = 'payflow-static-v1';
+const CACHE_NAME = 'payflow-static-v2';
 
 /**
  * Static assets to pre-cache on SW install.

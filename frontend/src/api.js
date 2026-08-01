@@ -1,3 +1,5 @@
+import { markServerAwake } from './utils/keepAlive.js'
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 // ── Global 403 handler ──────────────────────────────────────────────────────
@@ -29,6 +31,7 @@ export async function apiFetch(path, options = {}) {
   }
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+  if (res.ok) markServerAwake()
 
   // Handle 401 — attempt token refresh
   if (res.status === 401) {
@@ -37,7 +40,9 @@ export async function apiFetch(path, options = {}) {
       // Retry with new token
       const newToken = localStorage.getItem('payflow_token')
       const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` }
-      return fetch(`${API_BASE}${path}`, { ...options, headers: retryHeaders })
+      const retryRes = await fetch(`${API_BASE}${path}`, { ...options, headers: retryHeaders })
+      if (retryRes.ok) markServerAwake()
+      return retryRes
     }
     // Refresh also failed — session is fully stale
     handleStaleSession()
