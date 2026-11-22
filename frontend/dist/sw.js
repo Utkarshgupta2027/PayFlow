@@ -41,6 +41,7 @@ const API_PREFIXES = [
   '/referral',
   '/bank',
   '/notifications',
+  '/offline',
 ];
 
 // ─── Helper: is this request an API call we must NOT cache? ───────────────────

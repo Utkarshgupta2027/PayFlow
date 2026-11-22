@@ -14,6 +14,8 @@ export default defineConfig({
       '/otp': 'http://localhost:8080',
       '/referral': 'http://localhost:8080',
       '/bank': 'http://localhost:8080',
+      '/offline': 'http://localhost:8080',
+      '/notifications': 'http://localhost:8080',
     }
   },
   build: {
