@@ -24,6 +24,9 @@ import Feedback from './pages/Feedback.jsx'
 import CheckBalance from './pages/CheckBalance.jsx'
 import Transactions from './pages/Transactions.jsx'
 import BillPayments from './pages/BillPayments.jsx'
+import OfflineWallet from './pages/OfflineWallet.jsx'
+import PayOffline from './pages/PayOffline.jsx'
+import ReceiveOffline from './pages/ReceiveOffline.jsx'
 import Layout from './components/Layout.jsx'
 
 function PrivateRoute({ children }) {
@@ -63,6 +66,9 @@ export default function App() {
               <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
               <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
                 <Route index element={<Dashboard />} />
+                <Route path="offline-wallet" element={<OfflineWallet />} />
+                <Route path="pay-offline" element={<PayOffline />} />
+                <Route path="receive-offline" element={<ReceiveOffline />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="transactions" element={<Transactions />} />
                 <Route path="bills" element={<BillPayments />} />

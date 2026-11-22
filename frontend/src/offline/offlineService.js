@@ -170,7 +170,9 @@ export async function createOfflinePaymentToken({ receiverId, amount, currentUse
 
   // Atomically increment counter for this cert
   const counter = await db.getNextCounter(cert.certId);
-  const tokenId = crypto.randomUUID ? crypto.randomUUID() : `tok-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const tokenId = (typeof window !== 'undefined' && window.crypto?.randomUUID)
+    ? window.crypto.randomUUID()
+    : `tok-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   const timestamp = Date.now();
 
   const token = {

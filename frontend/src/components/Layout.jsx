@@ -6,9 +6,13 @@ import { WebSocketProvider } from '../context/WebSocketContext.jsx'
 import Toast from './Toast.jsx'
 import UserAvatar from './UserAvatar.jsx'
 import { apiFetch } from '../api.js'
+import useOnlineStatus from '../offline/useOnlineStatus.js'
 
 const NAV_ITEMS = [
   { to: '/', icon: 'home', labelKey: 'nav.dashboard', end: true },
+  { to: '/offline-wallet', icon: 'shield', labelKey: 'nav.offlineWallet' },
+  { to: '/pay-offline', icon: 'offlinePay', labelKey: 'nav.payOffline' },
+  { to: '/receive-offline', icon: 'offlineReceive', labelKey: 'nav.receiveOffline' },
   { to: '/transactions', icon: 'list', labelKey: 'nav.transactions' },
   { to: '/bills', icon: 'receipt', labelKey: 'nav.bills' },
   { to: '/analytics', icon: 'chart', labelKey: 'nav.analytics' },
@@ -49,6 +53,9 @@ function NavIcon({ name }) {
     settings: <><path {...common} d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" /><path {...common} d="M19.4 15a8 8 0 0 0 .1-2l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L15 5.5h-4l-.4 2.6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a8 8 0 0 0 .1 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.4 2.6h4l.4-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2.2-1.5Z" /></>,
     logout: <><path {...common} d="M10 17l5-5-5-5" /><path {...common} d="M15 12H3" /><path {...common} d="M21 4v16" /></>,
     admin: <><path {...common} d="M12 3 4 6v6c0 5 3.4 8.5 8 9 4.6-.5 8-4 8-9V6l-8-3Z" /><path {...common} d="m9 12 2 2 4-5" /></>,
+    shield: <path {...common} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
+    offlinePay: <path {...common} d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
+    offlineReceive: <path {...common} d="M12 2v10M17 7l-5 5-5-5M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />,
   }
 
   return (
@@ -66,6 +73,7 @@ export default function Layout() {
   const [toast, setToast] = useState(null)
   const location = useLocation()
   const [unreadCount, setUnreadCount] = useState(0)
+  const { isOnline, isSyncing, pendingCount, triggerSync } = useOnlineStatus()
 
   useEffect(() => { setSidebarOpen(false) }, [location.pathname])
 
@@ -210,6 +218,70 @@ export default function Layout() {
         </aside>
 
         <main className="main-content animate-fade-in">
+          {/* Offline Network Banner */}
+          {!isOnline && (
+            <div style={{
+              background: 'linear-gradient(90deg, #b45309, #d97706)',
+              color: '#ffffff',
+              padding: '0.625rem 1rem',
+              borderRadius: '0.75rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(217,119,6,0.25)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>⚡</span>
+                <span>You are offline. Offline Payments are enabled. Received tokens will settle once reconnected.</span>
+              </div>
+              <span style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,0.2)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                OFFLINE MODE
+              </span>
+            </div>
+          )}
+
+          {/* Pending Settlements Ready Banner */}
+          {isOnline && pendingCount > 0 && (
+            <div style={{
+              background: 'linear-gradient(90deg, #0284c7, #0ea5e9)',
+              color: '#ffffff',
+              padding: '0.625rem 1rem',
+              borderRadius: '0.75rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(14,165,233,0.25)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>🔄</span>
+                <span>{pendingCount} offline payment(s) awaiting server settlement.</span>
+              </div>
+              <button
+                onClick={triggerSync}
+                disabled={isSyncing}
+                style={{
+                  background: '#ffffff',
+                  color: '#0284c7',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  padding: '0.35rem 0.75rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
+                  cursor: isSyncing ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                {isSyncing ? 'Syncing…' : 'Sync Now'}
+              </button>
+            </div>
+          )}
+
           <Outlet context={{ setToast }} />
         </main>
 
