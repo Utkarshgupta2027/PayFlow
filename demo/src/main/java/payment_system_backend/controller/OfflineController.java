@@ -29,6 +29,33 @@ public class OfflineController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    @PostMapping("/sync")
+    @Operation(summary = "Settle offline payment tokens", description = "Verifies and settles a batch of offline payment tokens. Idempotent per tokenId.")
+    public ResponseEntity<OfflineSyncResponse> sync(@RequestBody(required = false) com.fasterxml.jackson.databind.JsonNode body, Authentication authentication) {
+        currentUser(authentication);
+
+        java.util.List<OfflineTokenDto> tokens = new java.util.ArrayList<>();
+        if (body != null) {
+            if (body.isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode item : body) {
+                    tokens.add(objectMapper.convertValue(item, OfflineTokenDto.class));
+                }
+            } else if (body.isObject() && body.has("tokens") && body.get("tokens").isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode item : body.get("tokens")) {
+                    tokens.add(objectMapper.convertValue(item, OfflineTokenDto.class));
+                }
+            } else if (body.isObject() && body.has("tokenId")) {
+                tokens.add(objectMapper.convertValue(body, OfflineTokenDto.class));
+            }
+        }
+
+        OfflineSyncResponse response = offlineWalletService.settle(tokens);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/enable")
     @Operation(summary = "Enable offline mode and allocate escrow funds", description = "Deducts funds from main balance into offline escrow and issues a server-signed certificate.")
     public ResponseEntity<?> enable(@RequestBody EnableOfflineRequest request, Authentication authentication) {

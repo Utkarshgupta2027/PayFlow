@@ -48,6 +48,38 @@ public class OfflineWalletService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private OfflineSettlementService settlementService;
+
+    /**
+     * Settle a batch of offline payment tokens. Each token is settled in its own
+     * transaction so that failures do not roll back successful settlements.
+     */
+    public OfflineSyncResponse settle(java.util.List<OfflineTokenDto> tokens) {
+        if (tokens == null || tokens.isEmpty()) {
+            return new OfflineSyncResponse(0, 0, 0, 0, java.util.Collections.emptyList());
+        }
+
+        java.util.List<OfflineSyncResponse.TokenResult> results = new java.util.ArrayList<>();
+        int settledCount = 0;
+        int rejectedCount = 0;
+        int duplicateCount = 0;
+
+        for (OfflineTokenDto token : tokens) {
+            OfflineSyncResponse.TokenResult res = settlementService.settleSingleToken(token);
+            results.add(res);
+            if ("SETTLED".equalsIgnoreCase(res.getStatus())) {
+                settledCount++;
+            } else if ("DUPLICATE".equalsIgnoreCase(res.getStatus())) {
+                duplicateCount++;
+            } else {
+                rejectedCount++;
+            }
+        }
+
+        return new OfflineSyncResponse(tokens.size(), settledCount, rejectedCount, duplicateCount, results);
+    }
+
     /**
      * Enable offline mode and allocate funds to escrow.
      */
