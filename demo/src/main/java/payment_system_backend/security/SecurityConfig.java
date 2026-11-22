@@ -34,6 +34,7 @@ public class SecurityConfig {
                     "/user/register", "/user/login", "/user/refresh",
                     "/otp/**", "/api/email-otp/**", "/user/forgot-password/**", 
                     "/api/feedback/**", "/ws/**", "/qr/**", "/wallet/payment/webhook",
+                    "/offline/public-key",
                     "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                 ).permitAll()
                 // Admin only
