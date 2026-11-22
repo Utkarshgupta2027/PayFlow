@@ -18,6 +18,14 @@ Required backend variables:
 - `RAZORPAY_KEY_SECRET`
 - `RAZORPAY_WEBHOOK_SECRET`
 
+Offline Payments backend variables:
+
+- `OFFLINE_SIGNING_PRIVATE_KEY` (Base64 PKCS#8 DER ECDSA P-256 private key for signing certificates)
+- `OFFLINE_SIGNING_PUBLIC_KEY` (Base64 X.509 SPKI DER ECDSA P-256 public key)
+- `OFFLINE_MAX_PER_TX` (Optional, default `500.0`)
+- `OFFLINE_MAX_ESCROW` (Optional, default `2000.0`)
+- `OFFLINE_CERT_VALIDITY_DAYS` (Optional, default `7`)
+
 Optional backend variables:
 
 - `MAIL_HOST`
@@ -31,6 +39,7 @@ Optional backend variables:
 Frontend variable:
 
 - `VITE_API_URL`
+- `VITE_OFFLINE_SERVER_PUBLIC_KEY` (Optional, base64 X.509 public key to verify server certificates offline)
 
 Before deploying, rotate every credential that was previously committed,
 including database credentials, Gmail app password, Razorpay keys, and JWT

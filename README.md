@@ -109,6 +109,15 @@ QR:
 - Fetch QR image from backend
 - Scan or use QR information for payment flows
 
+Offline Payments:
+- Offline Wallet dashboard showing active escrow limits, remaining balance, spent, and expiry
+- Enable offline payments online with transaction PIN
+- Top up escrow, release unspent escrow, or revoke wallet
+- Pay Offline without internet: signs payment tokens via WebCrypto ECDSA P-256 and displays QR code + copyable payload
+- Receive Offline without internet: scans QR or pastes code, verifies server certificate & token signature locally, and stores as `PENDING_SETTLEMENT` in IndexedDB
+- Auto-sync on reconnect or manual sync trigger
+- Global offline status banner and pending settlement indicator
+
 Split Payments:
 - Create split payment groups
 - Add participants
@@ -257,6 +266,15 @@ Notifications (`/notifications`):
 
 Feedback (`/api/feedback`):
 - `POST /api/feedback` saves user feedback
+
+Offline Payments (`/offline`):
+- `POST /offline/enable` enables offline mode, validates PIN, deducts balance to escrow, issues server-signed certificate
+- `POST /offline/topup` tops up offline escrow balance from main wallet
+- `POST /offline/release` releases unused escrow funds back to main wallet balance
+- `POST /offline/revoke` revokes offline wallet (lost device flow or admin action) and refunds remaining escrow
+- `GET /offline/status` returns current offline wallet status, limits, and active certificate
+- `GET /offline/public-key` returns server's ECDSA public key for certificate verification
+- `POST /offline/sync` rate-limited idempotent batch settlement endpoint verifying signatures, strictly increasing counters, and escrow limits in isolated transactions
 
 Admin (`/admin`):
 - `GET /admin/stats` returns admin dashboard stats

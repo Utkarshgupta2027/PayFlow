@@ -29,8 +29,7 @@ public class OfflineController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     @PostMapping("/sync")
     @Operation(summary = "Settle offline payment tokens", description = "Verifies and settles a batch of offline payment tokens. Idempotent per tokenId.")
